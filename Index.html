@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أداة تحليل السجلات الطبية</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2336;
+    --border: #2a3050;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --gray: #64748b;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --physician: #818cf8;
+    --nurse: #34d399;
+    --multi: #fb923c;
+    --op: #f472b6;
+    --sw: #facc15;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .header h1 { font-size: 16px; font-weight: 600; }
+  .header p { font-size: 12px; color: var(--text2); }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Step indicator */
+  .steps {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .step {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text2);
+  }
+  .step.active { color: var(--accent); }
+  .step.done { color: var(--green); }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+  }
+  .step.active .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+  .step.done .step-num { background: var(--green); border-color: var(--green); color: white; }
+  .step-divider { flex: 1; height: 1px; background: var(--border); }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Form elements */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    direction: rtl;
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--accent);
+  }
+
+  .form-group select option { background: var(--surface2); }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-reset {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    padding: 6px 14px;
+  }
+
+  /* Section headers */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 16px 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .section-physician { background: rgba(129,140,248,0.1); color: var(--physician); border-right: 3px solid var(--physician); }
+  .section-nurse { background: rgba(52,211,153,0.1); color: var(--nurse); border-right: 3px solid var(--nurse); }
+  .section-multi { background: rgba(251,146,60,0.1); color: var(--multi); border-right: 3px solid var(--multi); }
+  .section-op { background: rgba(244,114,182,0.1); color: var(--op); border-right: 3px solid var(--op); }
+
+  /* Checklist rows */
+  .checklist-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    background: var(--surface2);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .checklist-item.na {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .checklist-item.complete { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
+  .checklist-item.doc-deficient { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.05); }
+  .checklist-item.sign-deficient { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
+
+  .item-name {
+    font-size: 13px;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .item-name .tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .tag-e { background: rgba(59,130,246,0.2); color: var(--accent); }
+  .tag-p { background: rgba(129,140,248,0.2); color: var(--physician); }
+
+  .item-actions { display: flex; gap: 4px; }
+
+  .action-btn {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .action-btn:hover { background: var(--surface2); }
+  .action-btn.active-complete { background: var(--green); border-color: var(--green); color: white; }
+  .action-btn.active-doc { background: var(--red); border-color: var(--red); color: white; }
+  .action-btn.active-sign { background: var(--yellow); border-color: var(--yellow); color: #000; }
+  .action-btn.active-na { background: var(--gray); border-color: var(--gray); color: white; }
+
+  .resp-input {
+    width: 100%;
+    margin-top: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    direction: rtl;
+  }
+  .resp-input:focus { border-color: var(--yellow); }
+
+  .item-full { grid-column: 1 / -1; }
+
+  /* Summary */
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-box .num { font-size: 24px; font-weight: 700; }
+  .stat-box .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .stat-complete .num { color: var(--green); }
+  .stat-doc .num { color: var(--red); }
+  .stat-sign .num { color: var(--yellow); }
+
+  .deficiency-list { margin-top: 12px; }
+  .deficiency-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .deficiency-item:last-child { border-bottom: none; }
+  .def-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .def-doc { background: rgba(239,68,68,0.2); color: var(--red); }
+  .def-sign { background: rgba(245,158,11,0.2); color: var(--yellow); }
+
+  .def-resp { color: var(--text2); font-size: 12px; margin-top: 2px; }
+
+  .print-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 12px;
+    width: 100%;
+    transition: all 0.2s;
+  }
+  .print-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hidden { display: none !important; }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .file-info-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .fi-item { display: flex; gap: 6px; }
+  .fi-label { color: var(--text2); }
+  .fi-value { font-weight: 600; color: var(--text); }
+
+
+  /* Staff modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%; max-width: 480px;
+    max-height: 80vh; overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 15px; font-weight: 700;
+    margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-section { margin-bottom: 20px; }
+  .modal-section-title { font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
+  .staff-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 28px; }
+  .staff-tag {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 10px; font-size: 12px;
+  }
+  .staff-add-row { display: flex; gap: 8px; }
+  .staff-add-row input {
+    flex: 1;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    color: var(--text); font-family: inherit; font-size: 13px; outline: none;
+    direction: rtl;
+  }
+  .staff-add-row input:focus { border-color: var(--accent); }
+  .staff-add-btn {
+    background: var(--accent); color: white; border: none;
+    border-radius: 8px; padding: 8px 14px; font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .manage-staff-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); font-family: inherit; font-size: 12px;
+    padding: 5px 12px; border-radius: 6px; cursor: pointer;
+    margin-right: auto;
+  }
+
+  @media print {
+    body { background: white; color: black; }
+    .header, .btn-primary, .print-btn, #step1, .steps, .progress-bar, .file-info-bar, .action-btn, .resp-input { display: none !important; }
+    .summary-card { border: 1px solid #ccc; }
+    .deficiency-item { color: black; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🏥</div>
+  <div>
+    <h1>أداة تحليل السجلات الطبية</h1>
+    <p>Patient Deficiency Checklist</p>
+  </div>
+  <div style="margin-right: auto;">
+    <button class="manage-staff-btn" onclick="openStaffModal()">👥 الكوادر</button>
+    <button class="btn btn-reset" onclick="resetAll()">ملف جديد ↺</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="s1"><div class="step-num">١</div><span>بيانات الملف</span></div>
+    <div class="step-divider"></div>
+    <div class="step" id="s2"><div class="step-num">٢</div><span>التحليل</span></div>
+    <div class="step-divider"></div>
+    <div class="step" id="s3"><div class="step-num">٣</div><span>التقرير</span></div>
+  </div>
+
+  <!-- Step 1: File Info -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-title">📋 بيانات الملف</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>رقم الملف *</label>
+          <input type="text" id="fileNum" placeholder="مثال: 300443260" />
+        </div>
+        <div class="form-group">
+          <label>نوع الملف *</label>
+          <select id="fileType">
+            <option value="">-- اختر --</option>
+            <option value="icu">عناية مركزة (ICU)</option>
+            <option value="surgery">عمليات (Surgery)</option>
+            <option value="internal">داخلية (Internal Medicine)</option>
+            <option value="pediatric">أطفال (Pediatric)</option>
+            <option value="obstetric">ولادة (Obstetric)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>نوع الخروج *</label>
+          <select id="dischargeType">
+            <option value="">-- اختر --</option>
+            <option value="discharged">خروج عادي (Discharged)</option>
+            <option value="transferred_ward">تحويل لقسم (Transferred to Ward)</option>
+            <option value="transferred_hospital">تحويل لمستشفى (Transferred to Hospital)</option>
+            <option value="dama">DAMA</option>
+            <option value="expired">وفاة (Expired)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>حالة السكر</label>
+          <select id="diabeticStatus">
+            <option value="na">غير منطبق</option>
+            <option value="stable">مستقر (Stable)</option>
+            <option value="unstable">مو مستقر (Unstable)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>اسم الطبيب المسؤول عن الحالة</label>
+          <input type="text" id="mainDoc" placeholder="د. ..." />
+        </div>
+        <div class="form-group">
+          <label>تاريخ الخروج</label>
+          <input type="date" id="dischargeDate" />
+        </div>
+        <div class="form-group">
+          <label>اسم المحلل *</label>
+          <input type="text" id="analystName" placeholder="اسمك..." />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="startAnalysis()" id="startBtn" disabled>
+        بدء التحليل ←
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Checklist -->
+  <div id="step2" class="hidden">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+    <div class="file-info-bar" id="fileInfoBar"></div>
+
+    <div class="card" id="checklistContainer">
+      <!-- Generated dynamically -->
+    </div>
+
+    <button class="btn btn-primary" onclick="showReport()">عرض التقرير →</button>
+  </div>
+
+  <!-- Step 3: Report -->
+  <div id="step3" class="hidden">
+    <div class="file-info-bar" id="fileInfoBar2"></div>
+    <div class="summary-card">
+      <div class="card-title">📊 ملخص التحليل</div>
+      <div class="summary-stats">
+        <div class="stat-box stat-complete">
+          <div class="num" id="statComplete">0</div>
+          <div class="lbl">مكتمل</div>
+        </div>
+        <div class="stat-box stat-doc">
+          <div class="num" id="statDoc">0</div>
+          <div class="lbl">نقص وثيقة</div>
+        </div>
+        <div class="stat-box stat-sign">
+          <div class="num" id="statSign">0</div>
+          <div class="lbl">نقص توقيع</div>
+        </div>
+      </div>
+
+      <div class="deficiency-list" id="deficiencyList"></div>
+
+      <button class="print-btn" onclick="window.print()">🖨️ طباعة التقرير</button>
+      <button class="print-btn" id="saveBtn" style="margin-top:8px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none" onclick="saveToSheets()">☁️ حفظ في Google Sheets</button>
+      <div id="saveStatus" style="text-align:center;font-size:12px;margin-top:8px;min-height:20px"></div>
+      <button class="print-btn" style="margin-top:8px" onclick="backToChecklist()">← العودة للتحليل</button>
+    </div>
+  </div>
+
+
+<!-- Staff Modal -->
+<div id="staffModal" class="modal-overlay hidden" onclick="if(event.target===this)closeStaffModal()">
+  <div class="modal">
+    <div class="modal-title">
+      👥 إدارة أسماء الكوادر
+      <button onclick="closeStaffModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">👨‍⚕️ الأطباء</div>
+      <div class="staff-tags" id="doctorsList"></div>
+      <div class="staff-add-row">
+        <input id="doctorsInput" placeholder="اسم الطبيب..." onkeydown="if(event.key==='Enter')submitStaff('doctors')" />
+        <button class="staff-add-btn" onclick="submitStaff('doctors')">إضافة</button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">👩‍⚕️ التمريض</div>
+      <div class="staff-tags" id="nursesList"></div>
+      <div class="staff-add-row">
+        <input id="nursesInput" placeholder="اسم الممرض/ة..." onkeydown="if(event.key==='Enter')submitStaff('nurses')" />
+        <button class="staff-add-btn" onclick="submitStaff('nurses')">إضافة</button>
+      </div>
+    </div>
+    <button onclick="closeStaffModal()" class="btn btn-primary" style="margin-top:8px">حفظ وإغلاق</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ===== DATA =====
+
+const ICU_ITEMS = [
+  // PHYSICIAN
+  { id: 'admission_req', name: 'Admission Request Form', section: 'physician', type: 'paper',
+    naCondition: (ctx) => false,
+    defaultResp: 'Physician' },
+  { id: 'discharge_sum', name: 'Discharge Summary', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+  { id: 'criteria_admit', name: 'Criteria for Admission to ICU', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'N/A' },
+  { id: 'icu_initial_assess', name: 'ICU Patient Initial Assessment', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+  { id: 'physician_care', name: 'Physician Care Plan', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+  { id: 'vte', name: 'VTE Form (Adult)', section: 'physician', type: 'electronic',
+    signNote: 'إذا كانت Draft فالنقص في Sign',
+    naCondition: (ctx) => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
+  { id: 'doctor_orders', name: "Doctor's Orders", section: 'physician', type: 'electronic',
+    signNote: 'إذا كان Draft فالنقص في Sign',
+    naCondition: (ctx) => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
+  { id: 'doctor_progress', name: "Doctor's Progress Notes", section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+  { id: 'transfer_summary', name: 'Transfer Summary (Dr)', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => ['transferred_hospital','dama','expired'].includes(ctx.discharge) || ctx.discharge === 'discharged',
+    naNote: 'N/A إلا في حالة تحويل لقسم داخلي',
+    defaultResp: 'Physician' },
+  { id: 'consultation', name: 'Consultation', section: 'physician', type: 'electronic',
+    signNote: 'إذا كانت نفس التخصص → Sign + Responsibility: N/A',
+    naCondition: (ctx) => false, defaultResp: 'N/A' },
+  { id: 'mrp_handover', name: 'Most Responsible Physician Hand Over', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+  { id: 'physician_shift', name: 'Physician Shift Hand Over', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+  { id: 'criteria_discharge', name: 'Criteria for Discharge from ICU', section: 'physician', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+
+  // MULTIDISCIPLINARY
+  { id: 'interdisciplinary', name: 'Interdisciplinary Plan of Care', section: 'multi', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician / Nurse (NR)' },
+  { id: 'patient_edu', name: 'Patient & Family Education Sheet', section: 'multi', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Physician / Nurse (NR)' },
+  { id: 'nutritional_screen', name: 'Nutritional Risk Screening + Assessment + Reassess', section: 'multi', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nutrition' },
+  { id: 'resp_therapy', name: 'Respiratory Therapy', section: 'multi', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Respiratory' },
+  { id: 'sw_care', name: 'Social Worker Care Plan + Progress Note + Assessment', section: 'multi', type: 'paper',
+    naCondition: (ctx) => false,
+    note: 'إلزامي في كل ملفات ICU',
+    defaultResp: 'SW + Physician' },
+  { id: 'sw_referral', name: 'Social Worker Referral', section: 'multi', type: 'paper',
+    naCondition: (ctx) => ctx.discharge !== 'dama',
+    naNote: 'مطلوب فقط مع DAMA',
+    defaultResp: 'SW' },
+  { id: 'medication_rec', name: 'Medication Reconciliation', section: 'multi', type: 'electronic',
+    signNote: 'إذا كان Draft فالنقص في Sign',
+    naCondition: (ctx) => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
+  { id: 'surgical_safety_nonor', name: 'Surgical Safety Checklist for non-OR', section: 'multi', type: 'paper',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+
+  // NURSE
+  { id: 'diabetic_chart', name: 'Diabetic Chart Record', section: 'nurse', type: 'paper',
+    naCondition: (ctx) => ctx.diabetic !== 'unstable',
+    naNote: 'مطلوب فقط إذا السكر مو مستقر',
+    defaultResp: 'Nurse' },
+  { id: 'pain_assessment', name: 'Pain Assessment Flow Sheet', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'initial_nursing', name: 'Initial Nursing Assessment (OPD-ER-ICU)', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'nursing_reassess', name: 'Nursing Reassessment Form (ICU/PICU)', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'nursing_care_plan', name: 'Nursing Care Plan', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'nurses_progress', name: "Nurses Progress Notes", section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'sbar', name: 'Nurses SBAR Endorsement', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'fall_risk', name: 'Fall Risk Assessment & Intervention (Adult)', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'injury_assess', name: 'Injury Assessment Form', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'braden', name: 'Braden Scale for Predicting Pressure Risk', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'discharge_checklist', name: 'Patient Orientation / Discharge Check List', section: 'nurse', type: 'electronic',
+    naCondition: (ctx) => false, defaultResp: 'Nurse' },
+  { id: 'consents', name: 'Consents', section: 'nurse', type: 'paper',
+    signNote: 'تحقق من الاسم والتوقيع',
+    naCondition: (ctx) => false, defaultResp: 'Physician' },
+];
+
+const SURGERY_ITEMS = [
+  // PHYSICIAN
+  { id: 'admission_sum', name: 'Admission Summary', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+  { id: 'discharge_sum', name: 'Discharge Summary', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+  { id: 'patient_initial', name: 'Patient Initial Assessment', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+  { id: 'physician_care', name: 'Physician Care Plan', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+  { id: 'vte', name: 'VTE Form (Adult/Antenatal/post-natal)', section: 'physician', type: 'electronic', signNote: 'إذا Draft → Sign', naCondition: () => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
+  { id: 'doctor_orders', name: "Doctor's Orders", section: 'physician', type: 'electronic', signNote: 'إذا Draft → Sign', naCondition: () => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
+  { id: 'doctor_progress', name: "Doctor's Progress Notes", section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+  { id: 'transfer_summary', name: 'Transfer Summary (Dr)', section: 'physician', type: 'electronic', naCondition: (ctx) => ['transferred_hospital','dama','expired','discharged'].includes(ctx.discharge), defaultResp: 'Physician' },
+  { id: 'consultation', name: 'Consultation', section: 'physician', type: 'electronic', signNote: 'نفس التخصص → Sign + N/A', naCondition: () => false, defaultResp: 'N/A' },
+  { id: 'mrp_handover', name: 'Most Responsible Physician Hand Over', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+  { id: 'physician_shift', name: 'Physician Shift Hand Over', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+
+  // MULTI
+  { id: 'interdisciplinary', name: 'Interdisciplinary Plan of Care', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Physician / Nurse (NR)' },
+  { id: 'patient_edu', name: 'Patient & Family Education Sheet', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Physician / Nurse (NR)' },
+  { id: 'nutritional_screen', name: 'Nutritional Risk Screening', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Nutrition' },
+  { id: 'nutritional_care', name: 'Nutritional Care Process Assessment + Reassess', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Nutrition' },
+  { id: 'sw_care', name: 'Social Worker Care Plan + Progress Note', section: 'multi', type: 'paper', naCondition: () => false, defaultResp: 'SW' },
+  { id: 'sw_assess', name: 'Social Worker Assessment', section: 'multi', type: 'paper', naCondition: () => false, defaultResp: 'SW' },
+  { id: 'medication_rec', name: 'Medication Reconciliation Form', section: 'multi', type: 'electronic', signNote: 'إذا Draft → Sign', naCondition: () => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
+
+  // OPERATION RECORD
+  { id: 'op_record', name: 'Operation Record', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Surgeon' },
+  { id: 'pre_op_anesthesia', name: 'Pre-Operative Anesthesia Evaluation', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Anesthesia' },
+  { id: 'anesthesia_record', name: 'Anesthesia Record', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'Anesthesia' },
+  { id: 'pacu_dept', name: 'Anesthesia Department PACU Record', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'Anesthesia' },
+  { id: 'pacu_nursing', name: 'PACU Record - Nursing (ADULT-Pediatric)', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'pre_post_checklist', name: 'Pre/Post Operative Checklist Form', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'intra_op', name: 'Intra Operative Record', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'OR Nurse' },
+  { id: 'instruments', name: 'Instruments & Sponges Count', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'OR Nurse' },
+  { id: 'surgical_safety', name: 'Surgical Safety Checklist', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'Surgeon' },
+  { id: 'post_op_care', name: 'Post Operative Care Plan', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
+
+  // NURSE
+  { id: 'diabetic_chart', name: 'Diabetic Chart Record', section: 'nurse', type: 'paper', naCondition: (ctx) => ctx.diabetic !== 'unstable', naNote: 'مطلوب فقط إذا السكر مو مستقر', defaultResp: 'Nurse' },
+  { id: 'pain_assessment', name: 'Pain Assessment Flow Sheet', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'initial_nursing', name: 'Initial Nursing Assessment (OPD-ER)', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'nursing_reassess', name: 'Nursing Reassessment Form', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'nursing_care_plan', name: 'Nursing Care Plan', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'nurses_progress', name: "Nurses Progress Notes", section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'braden', name: 'Braden Scale for Predicting Pressure Risk', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'fall_risk', name: 'Fall Risk Assessment & Intervention (Adult)', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'discharge_checklist', name: 'Patient Orientation / Discharge Check List', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
+  { id: 'consents', name: 'Consents', section: 'nurse', type: 'paper', signNote: 'تحقق من الاسم والتوقيع', naCondition: () => false, defaultResp: 'Physician' },
+];
+
+const ITEMS_MAP = {
+  icu: ICU_ITEMS,
+  surgery: SURGERY_ITEMS,
+  internal: ICU_ITEMS, // placeholder
+  pediatric: ICU_ITEMS,
+  obstetric: ICU_ITEMS,
+};
+
+const SECTION_LABELS = {
+  physician: { label: 'PHYSICIAN', cls: 'section-physician', icon: '👨‍⚕️' },
+  multi: { label: 'MULTIDISCIPLINARY TEAM', cls: 'section-multi', icon: '👥' },
+  operation: { label: 'OPERATION RECORD', cls: 'section-op', icon: '🔬' },
+  nurse: { label: 'NURSE', cls: 'section-nurse', icon: '👩‍⚕️' },
+};
+
+const FILE_TYPE_LABELS = { icu:'عناية مركزة (ICU)', surgery:'عمليات (Surgery)', internal:'داخلية', pediatric:'أطفال', obstetric:'ولادة' };
+const DISCHARGE_LABELS = { discharged:'خروج عادي', transferred_ward:'تحويل لقسم', transferred_hospital:'تحويل لمستشفى', dama:'DAMA', expired:'وفاة' };
+
+// ===== STATE =====
+let state = {};
+let itemStates = {};
+let ctx = {};
+// Staff registry: { doctors: [{id, name}], nurses: [{id, name}] }
+let staffRegistry = JSON.parse(localStorage.getItem('staffRegistry') || '{"doctors":[],"nurses":[]}');
+
+function saveStaff() {
+  try { localStorage.setItem('staffRegistry', JSON.stringify(staffRegistry)); } catch(e) {}
+}
+
+function addStaff(type, name) {
+  const list = staffRegistry[type];
+  const clean = name.trim();
+  if (!clean) return false;
+  if (list.find(s => s.name.toLowerCase() === clean.toLowerCase())) return false; // no duplicates
+  list.push({ id: Date.now().toString(), name: clean });
+  saveStaff();
+  return true;
+}
+
+function removeStaff(type, id) {
+  staffRegistry[type] = staffRegistry[type].filter(s => s.id !== id);
+  saveStaff();
+  renderStaffModal();
+}
+
+// ===== STAFF MODAL =====
+function openStaffModal() {
+  document.getElementById('staffModal').classList.remove('hidden');
+  renderStaffModal();
+}
+function closeStaffModal() {
+  document.getElementById('staffModal').classList.add('hidden');
+}
+
+function renderStaffModal() {
+  ['doctors','nurses'].forEach(type => {
+    const list = staffRegistry[type];
+    const el = document.getElementById(`${type}List`);
+    el.innerHTML = list.length === 0
+      ? `<div style="color:var(--text2);font-size:12px;padding:4px 0">لا يوجد أسماء بعد</div>`
+      : list.map(s => `
+          <div class="staff-tag">
+            <span>${s.name}</span>
+            <button onclick="removeStaff('${type}','${s.id}');renderChecklist()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px">×</button>
+          </div>`).join('');
+  });
+}
+
+function submitStaff(type) {
+  const input = document.getElementById(`${type}Input`);
+  const name = input.value.trim();
+  if (!name) return;
+  const added = addStaff(type, name);
+  if (!added) {
+    input.style.borderColor = 'var(--red)';
+    setTimeout(() => input.style.borderColor = '', 1200);
+  } else {
+    input.value = '';
+    renderStaffModal();
+    renderChecklist();
+  }
+}
+
+// ===== FORM VALIDATION =====
+['fileNum','fileType','dischargeType'].forEach(id => {
+  document.getElementById(id).addEventListener('input', validateForm);
+  document.getElementById(id).addEventListener('change', validateForm);
+});
+
+function validateForm() {
+  const ok = document.getElementById('fileNum').value.trim() &&
+             document.getElementById('fileType').value &&
+             document.getElementById('dischargeType').value;
+  document.getElementById('startBtn').disabled = !ok;
+}
+
+// ===== START ANALYSIS =====
+function startAnalysis() {
+  ctx = {
+    fileNum: document.getElementById('fileNum').value.trim(),
+    fileType: document.getElementById('fileType').value,
+    discharge: document.getElementById('dischargeType').value,
+    diabetic: document.getElementById('diabeticStatus').value,
+    mainDoc: document.getElementById('mainDoc').value.trim(),
+    date: document.getElementById('dischargeDate').value,
+    analyst: document.getElementById('analystName').value.trim(),
+  };
+
+  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
+  itemStates = {};
+  items.forEach(item => {
+    const isNA = item.naCondition(ctx);
+    itemStates[item.id] = { status: isNA ? 'na' : null, resp: '' };
+  });
+
+  renderFileInfoBar('fileInfoBar');
+  renderChecklist();
+
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  document.getElementById('s1').classList.remove('active');
+  document.getElementById('s1').classList.add('done');
+  document.getElementById('s2').classList.add('active');
+
+  updateProgress();
+}
+
+// ===== RENDER CHECKLIST =====
+function renderChecklist() {
+  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
+  const container = document.getElementById('checklistContainer');
+  container.innerHTML = '';
+
+  let currentSection = null;
+
+  items.forEach(item => {
+    const s = itemStates[item.id];
+    const isNA = s.status === 'na';
+
+    if (item.section !== currentSection) {
+      currentSection = item.section;
+      const sec = SECTION_LABELS[currentSection] || { label: currentSection, cls: 'section-physician', icon: '📋' };
+      container.innerHTML += `<div class="section-header ${sec.cls}">${sec.icon} ${sec.label}</div>`;
+    }
+
+    const statusClass = s.status === 'complete' ? 'complete' :
+                        s.status === 'doc' ? 'doc-deficient' :
+                        s.status === 'sign' ? 'sign-deficient' :
+                        s.status === 'na' ? 'na' : '';
+
+    const typeBadge = item.type === 'electronic'
+      ? `<span class="tag tag-e">E</span>`
+      : `<span class="tag tag-p">P</span>`;
+
+    const noteHtml = item.signNote ? `<div style="font-size:11px;color:var(--yellow);margin-top:2px">⚡ ${item.signNote}</div>` : '';
+    const naNote = isNA && item.naNote ? `<div style="font-size:11px;color:var(--gray);margin-top:2px">— ${item.naNote}</div>` : '';
+
+    const respVal = s.resp || (typeof item.defaultResp === 'function' ? item.defaultResp(ctx) : item.defaultResp) || '';
+
+    // Build responsibility selector
+    let respHtml = '';
+    if (s.status === 'doc' || s.status === 'sign') {
+      const allStaff = [
+        ...staffRegistry.doctors.map(s => ({ label: `د. ${s.name}`, val: `د. ${s.name}` })),
+        ...staffRegistry.nurses.map(s => ({ label: `ن. ${s.name}`, val: `ن. ${s.name}` })),
+        { label: 'N/A', val: 'N/A' },
+        { label: 'SW', val: 'SW' },
+        { label: 'Nutrition', val: 'Nutrition' },
+        { label: 'Anesthesia', val: 'Anesthesia' },
+      ];
+      const opts = allStaff.map(o =>
+        `<option value="${o.val}" ${s.resp === o.val ? 'selected' : ''}>${o.label}</option>`
+      ).join('');
+      const customVal = s.resp && !allStaff.find(o => o.val === s.resp) ? s.resp : '';
+      respHtml = `<div class="item-full" style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <select class="resp-input" style="flex:1;min-width:140px" onchange="setResp('${item.id}',this.value)">
+          <option value="">-- اختر المسؤول --</option>
+          ${opts}
+          <option value="__custom__">+ إضافة اسم يدوي</option>
+        </select>
+        <input class="resp-input" id="custom-${item.id}" placeholder="اسم يدوي..." style="flex:1;min-width:120px;display:${customVal||s.resp==='__custom__'?'block':'none'}" value="${customVal}" onchange="setResp('${item.id}',this.value)" />
+      </div>`;
+    }
+
+    container.innerHTML += `
+      <div class="checklist-item ${statusClass}" id="row-${item.id}">
+        <div>
+          <div class="item-name">${typeBadge} ${item.name}</div>
+          ${noteHtml}${naNote}
+        </div>
+        <div class="item-actions">
+          <button class="action-btn ${s.status==='complete'?'active-complete':''}" onclick="setStatus('${item.id}','complete')">✓</button>
+          <button class="action-btn ${s.status==='doc'?'active-doc':''}" onclick="setStatus('${item.id}','doc')">Doc</button>
+          <button class="action-btn ${s.status==='sign'?'active-sign':''}" onclick="setStatus('${item.id}','sign')">Sign</button>
+          <button class="action-btn ${s.status==='na'?'active-na':''}" onclick="toggleNA('${item.id}')">N/A</button>
+        </div>
+        ${respHtml}
+      </div>
+    `;
+  });
+}
+
+function setStatus(id, status) {
+  const item = (ITEMS_MAP[ctx.fileType] || ICU_ITEMS).find(i => i.id === id);
+  if (itemStates[id].status === status) {
+    itemStates[id].status = null;
+  } else {
+    itemStates[id].status = status;
+    if (status === 'doc' || status === 'sign') {
+      if (!itemStates[id].resp) {
+        itemStates[id].resp = typeof item.defaultResp === 'function' ? item.defaultResp(ctx) : (item.defaultResp || '');
+      }
+    }
+  }
+  renderChecklist();
+  updateProgress();
+}
+
+function toggleNA(id) {
+  if (itemStates[id].status === 'na') {
+    itemStates[id].status = null;
+  } else {
+    itemStates[id].status = 'na';
+    itemStates[id].resp = '';
+  }
+  renderChecklist();
+  updateProgress();
+}
+
+function setResp(id, val) {
+  if (val === '__custom__') {
+    const el = document.getElementById('custom-' + id);
+    if (el) el.style.display = 'block';
+    return;
+  }
+  itemStates[id].resp = val;
+}
+
+function updateProgress() {
+  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
+  const active = items.filter(i => itemStates[i.id].status !== 'na');
+  const done = active.filter(i => itemStates[i.id].status !== null);
+  const pct = active.length ? (done.length / active.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderFileInfoBar(containerId) {
+  document.getElementById(containerId).innerHTML = `
+    <div class="fi-item"><span class="fi-label">رقم الملف:</span><span class="fi-value">${ctx.fileNum}</span></div>
+    <div class="fi-item"><span class="fi-label">النوع:</span><span class="fi-value">${FILE_TYPE_LABELS[ctx.fileType]||ctx.fileType}</span></div>
+    <div class="fi-item"><span class="fi-label">الخروج:</span><span class="fi-value">${DISCHARGE_LABELS[ctx.discharge]||ctx.discharge}</span></div>
+    ${ctx.date ? `<div class="fi-item"><span class="fi-label">التاريخ:</span><span class="fi-value">${ctx.date}</span></div>` : ''}
+  `;
+}
+
+// ===== REPORT =====
+function showReport() {
+  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
+  let complete = 0, doc = 0, sign = 0;
+  let deficiencies = [];
+
+  items.forEach(item => {
+    const s = itemStates[item.id];
+    if (s.status === 'complete') complete++;
+    else if (s.status === 'doc') { doc++; deficiencies.push({ name: item.name, type: 'doc', resp: s.resp }); }
+    else if (s.status === 'sign') { sign++; deficiencies.push({ name: item.name, type: 'sign', resp: s.resp }); }
+  });
+
+  document.getElementById('statComplete').textContent = complete;
+  document.getElementById('statDoc').textContent = doc;
+  document.getElementById('statSign').textContent = sign;
+
+  const list = document.getElementById('deficiencyList');
+  if (deficiencies.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--green);font-weight:600">✅ لا يوجد نقص في هذا الملف</div>`;
+  } else {
+    list.innerHTML = deficiencies.map(d => `
+      <div class="deficiency-item">
+        <span class="def-badge ${d.type === 'doc' ? 'def-doc' : 'def-sign'}">${d.type === 'doc' ? 'Doc' : 'Sign'}</span>
+        <div>
+          <div>${d.name}</div>
+          <div class="def-resp">المسؤول: ${d.resp || '—'}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  renderFileInfoBar('fileInfoBar2');
+
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
+  document.getElementById('s2').classList.remove('active');
+  document.getElementById('s2').classList.add('done');
+  document.getElementById('s3').classList.add('active');
+}
+
+function backToChecklist() {
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+  document.getElementById('s3').classList.remove('active');
+  document.getElementById('s2').classList.remove('done');
+  document.getElementById('s2').classList.add('active');
+}
+
+// ===== GOOGLE SHEETS INTEGRATION =====
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpXtlH3sEcPbM90xvwk4FOA1MQAJZmfK6qJ96OPT9iFDx86HU-EcySaQRelOuAawK7tQ/exec';
+
+async function saveToSheets() {
+  const btn = document.getElementById('saveBtn');
+  const status = document.getElementById('saveStatus');
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الحفظ...';
+  status.style.color = 'var(--text2)';
+  status.textContent = '';
+
+  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
+  const deficiencies = [];
+  items.forEach(item => {
+    const s = itemStates[item.id];
+    if (s.status === 'doc' || s.status === 'sign') {
+      deficiencies.push({ name: item.name, type: s.status, resp: s.resp || '' });
+    }
+  });
+
+  const payload = {
+    fileNum: ctx.fileNum,
+    fileType: FILE_TYPE_LABELS[ctx.fileType] || ctx.fileType,
+    discharge: DISCHARGE_LABELS[ctx.discharge] || ctx.discharge,
+    dischargeDate: ctx.date || '',
+    analyst: ctx.analyst || '',
+    deficiencies: deficiencies,
+  };
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (json.success) {
+      btn.textContent = '✅ تم الحفظ';
+      btn.style.background = 'var(--green)';
+      status.style.color = 'var(--green)';
+      status.textContent = 'تم الحفظ في Google Sheets بنجاح!';
+    } else {
+      throw new Error(json.error || 'خطأ غير معروف');
+    }
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = '☁️ حفظ في Google Sheets';
+    btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+    status.style.color = 'var(--red)';
+    status.textContent = 'فشل الحفظ: ' + err.message;
+  }
+}
+
+function resetAll() {
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('step1').classList.remove('hidden');
+  ['s1','s2','s3'].forEach(s => { document.getElementById(s).classList.remove('active','done'); });
+  document.getElementById('s1').classList.add('active');
+  document.getElementById('fileNum').value = '';
+  document.getElementById('fileType').value = '';
+  document.getElementById('dischargeType').value = '';
+  document.getElementById('diabeticStatus').value = 'na';
+  document.getElementById('mainDoc').value = '';
+  document.getElementById('dischargeDate').value = '';
+  document.getElementById('analystName').value = '';
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('progressFill').style.width = '0%';
+}
+</script>
+</body>
+</html>
