@@ -1,1094 +1,1672 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>أداة تحليل السجلات الطبية</title>
+<title>MedRecord — Deficiency Analysis System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
-
-  :root {
-    --bg: #0f1117;
-    --surface: #181c27;
-    --surface2: #1e2336;
-    --border: #2a3050;
-    --accent: #3b82f6;
-    --accent2: #6366f1;
-    --green: #22c55e;
-    --red: #ef4444;
-    --yellow: #f59e0b;
-    --gray: #64748b;
-    --text: #e2e8f0;
-    --text2: #94a3b8;
-    --physician: #818cf8;
-    --nurse: #34d399;
-    --multi: #fb923c;
-    --op: #f472b6;
-    --sw: #facc15;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'IBM Plex Sans Arabic', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    direction: rtl;
-  }
-
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .header-icon {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-
-  .header h1 { font-size: 16px; font-weight: 600; }
-  .header p { font-size: 12px; color: var(--text2); }
-
-  .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
-
-  /* Step indicator */
-  .steps {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-    align-items: center;
-  }
-  .step {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--text2);
-  }
-  .step.active { color: var(--accent); }
-  .step.done { color: var(--green); }
-  .step-num {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 600;
-  }
-  .step.active .step-num { background: var(--accent); border-color: var(--accent); color: white; }
-  .step.done .step-num { background: var(--green); border-color: var(--green); color: white; }
-  .step-divider { flex: 1; height: 1px; background: var(--border); }
-
-  /* Cards */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-  }
-
-  .card-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text2);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 16px;
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  /* Form elements */
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-
-  .form-group label {
-    display: block;
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
-
-  .form-group input, .form-group select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-    direction: rtl;
-  }
-
-  .form-group input:focus, .form-group select:focus {
-    border-color: var(--accent);
-  }
-
-  .form-group select option { background: var(--surface2); }
-
-  /* Buttons */
-  .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
-    width: 100%;
-    margin-top: 16px;
-    padding: 12px;
-  }
-  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-  .btn-reset {
-    background: var(--surface2);
-    color: var(--text2);
-    border: 1px solid var(--border);
-    font-size: 12px;
-    padding: 6px 14px;
-  }
-
-  /* Section headers */
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: 8px;
-    margin: 16px 0 8px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .section-physician { background: rgba(129,140,248,0.1); color: var(--physician); border-right: 3px solid var(--physician); }
-  .section-nurse { background: rgba(52,211,153,0.1); color: var(--nurse); border-right: 3px solid var(--nurse); }
-  .section-multi { background: rgba(251,146,60,0.1); color: var(--multi); border-right: 3px solid var(--multi); }
-  .section-op { background: rgba(244,114,182,0.1); color: var(--op); border-right: 3px solid var(--op); }
-
-  /* Checklist rows */
-  .checklist-item {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    margin-bottom: 4px;
-    background: var(--surface2);
-    border: 1px solid transparent;
-    transition: all 0.2s;
-  }
-
-  .checklist-item.na {
-    opacity: 0.35;
-    pointer-events: none;
-  }
-
-  .checklist-item.complete { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
-  .checklist-item.doc-deficient { border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.05); }
-  .checklist-item.sign-deficient { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
-
-  .item-name {
-    font-size: 13px;
-    font-weight: 500;
-    display: flex; align-items: center; gap: 6px;
-  }
-
-  .item-name .tag {
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-  }
-  .tag-e { background: rgba(59,130,246,0.2); color: var(--accent); }
-  .tag-p { background: rgba(129,140,248,0.2); color: var(--physician); }
-
-  .item-actions { display: flex; gap: 4px; }
-
-  .action-btn {
-    padding: 5px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text2);
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .action-btn:hover { background: var(--surface2); }
-  .action-btn.active-complete { background: var(--green); border-color: var(--green); color: white; }
-  .action-btn.active-doc { background: var(--red); border-color: var(--red); color: white; }
-  .action-btn.active-sign { background: var(--yellow); border-color: var(--yellow); color: #000; }
-  .action-btn.active-na { background: var(--gray); border-color: var(--gray); color: white; }
-
-  .resp-input {
-    width: 100%;
-    margin-top: 6px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 12px;
-    outline: none;
-    direction: rtl;
-  }
-  .resp-input:focus { border-color: var(--yellow); }
-
-  .item-full { grid-column: 1 / -1; }
-
-  /* Summary */
-  .summary-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 16px;
-  }
-
-  .summary-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  .stat-box {
-    background: var(--surface2);
-    border-radius: 8px;
-    padding: 12px;
-    text-align: center;
-  }
-  .stat-box .num { font-size: 24px; font-weight: 700; }
-  .stat-box .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
-  .stat-complete .num { color: var(--green); }
-  .stat-doc .num { color: var(--red); }
-  .stat-sign .num { color: var(--yellow); }
-
-  .deficiency-list { margin-top: 12px; }
-  .deficiency-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .deficiency-item:last-child { border-bottom: none; }
-  .def-badge {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .def-doc { background: rgba(239,68,68,0.2); color: var(--red); }
-  .def-sign { background: rgba(245,158,11,0.2); color: var(--yellow); }
-
-  .def-resp { color: var(--text2); font-size: 12px; margin-top: 2px; }
-
-  .print-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 12px;
-    width: 100%;
-    transition: all 0.2s;
-  }
-  .print-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .hidden { display: none !important; }
-
-  /* Progress bar */
-  .progress-bar {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 2px;
-    transition: width 0.3s;
-  }
-
-  .file-info-bar {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 16px;
-    display: flex;
-    gap: 16px;
-    font-size: 12px;
-    flex-wrap: wrap;
-  }
-  .fi-item { display: flex; gap: 6px; }
-  .fi-label { color: var(--text2); }
-  .fi-value { font-weight: 600; color: var(--text); }
-
-
-  /* Staff modal */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    display: flex; align-items: center; justify-content: center;
-    padding: 16px;
-  }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    width: 100%; max-width: 480px;
-    max-height: 80vh; overflow-y: auto;
-  }
-  .modal-title {
-    font-size: 15px; font-weight: 700;
-    margin-bottom: 20px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .modal-section { margin-bottom: 20px; }
-  .modal-section-title { font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 8px; text-transform: uppercase; }
-  .staff-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; min-height: 28px; }
-  .staff-tag {
-    display: flex; align-items: center; gap: 4px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 20px; padding: 4px 10px; font-size: 12px;
-  }
-  .staff-add-row { display: flex; gap: 8px; }
-  .staff-add-row input {
-    flex: 1;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 12px;
-    color: var(--text); font-family: inherit; font-size: 13px; outline: none;
-    direction: rtl;
-  }
-  .staff-add-row input:focus { border-color: var(--accent); }
-  .staff-add-btn {
-    background: var(--accent); color: white; border: none;
-    border-radius: 8px; padding: 8px 14px; font-family: inherit;
-    font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
-  }
-  .manage-staff-btn {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text2); font-family: inherit; font-size: 12px;
-    padding: 5px 12px; border-radius: 6px; cursor: pointer;
-    margin-right: auto;
-  }
-
-  @media print {
-    body { background: white; color: black; }
-    .header, .btn-primary, .print-btn, #step1, .steps, .progress-bar, .file-info-bar, .action-btn, .resp-input { display: none !important; }
-    .summary-card { border: 1px solid #ccc; }
-    .deficiency-item { color: black; }
-  }
+:root{
+  --navy:#1A3A6B;--navy-d:#102548;--navy-l:#2755B0;
+  --bg:#F0F4F9;--surface:#FFFFFF;--surface2:#F8FAFC;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --t1:#0D1B2E;--t2:#3A4D63;--t3:#64748B;--t4:#94A3B8;
+  --ok:#0A7A4F;--ok-bg:#E8F5EE;--ok-b:#A7DEC0;--ok-t:#065F3B;
+  --doc:#B91C1C;--doc-bg:#FEF0F0;--doc-b:#F5ABAB;--doc-t:#991515;
+  --sign:#B45309;--sign-bg:#FEF7E6;--sign-b:#F0C97A;--sign-t:#92400E;
+  --na:#64748B;--na-bg:#F1F5F9;--na-b:#CBD5E1;
+  --ph-bg:#EEF3FF;--ph-b:#BFCFF7;--ph-t:#1D4ED8;
+  --mu-bg:#F3EEFF;--mu-b:#C9B8F5;--mu-t:#7C3AED;
+  --nu-bg:#EDFAF8;--nu-b:#A7DDD8;--nu-t:#0F766E;
+  --op-bg:#FEF0F6;--op-b:#F5ABCF;--op-t:#BE185D;
+  --ev-bg:#FFF7ED;--ev-b:#FED7AA;--ev-t:#C2410C;
+  --r:8px;--rl:12px;
+}
+[data-theme=dark]{
+  --bg:#0C1422;--surface:#141E30;--surface2:#1A2540;
+  --border:#243044;--border2:#2E3E58;
+  --t1:#E8EEFF;--t2:#A8B8D0;--t3:#6B7A8D;--t4:#3A4A5C;
+  --ok-bg:#0A2E1F;--ok-b:#1A5A3A;--ok-t:#4ADE80;
+  --doc-bg:#2E0A0A;--doc-b:#5A1A1A;--doc-t:#FCA5A5;
+  --sign-bg:#2E1A04;--sign-b:#5A3A08;--sign-t:#FCD34D;
+  --na-bg:#1A2540;--na-b:#243044;
+  --ph-bg:#0A1430;--ph-b:#1A2A5A;--ph-t:#7BA4F0;
+  --mu-bg:#150B30;--mu-b:#2A1A5A;--mu-t:#C4B5FD;
+  --nu-bg:#061A18;--nu-b:#0E3530;--nu-t:#5EEAD4;
+  --op-bg:#200814;--op-b:#3A1028;--op-t:#F9A8D4;
+  --ev-bg:#1A0E00;--ev-b:#3D2200;--ev-t:#FB923C;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body.ar{font-family:'IBM Plex Sans Arabic',sans-serif;direction:rtl}
+ 
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;height:52px;background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:8px;box-shadow:0 1px 0 rgba(255,255,255,.08)}
+.tb-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.tb-mark{width:28px;height:28px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;letter-spacing:-.02em;flex-shrink:0}
+.tb-name{font-size:13px;font-weight:600;color:#fff;letter-spacing:-.01em}
+.tb-name span{color:rgba(255,255,255,.38);font-weight:400}
+.tb-gap{flex:1}
+.tb-btn{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);color:#fff;font:500 11px/1 inherit;cursor:pointer;transition:background .14s;white-space:nowrap;flex-shrink:0}
+.tb-btn:hover{background:rgba(255,255,255,.18)}
+.tb-btn svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;flex-shrink:0}
+ 
+/* LAYOUT */
+.shell{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 52px)}
+ 
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:14px 0 24px;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;display:flex;flex-direction:column;gap:0}
+.sb-sec{padding:0 10px;margin-bottom:14px}
+.sb-lbl{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.09em;color:var(--t4);padding:0 8px;margin-bottom:5px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r);font:500 12px/1 inherit;color:var(--t2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .13s}
+body.ar .sb-item{text-align:right}
+.sb-item:hover{background:var(--surface2);color:var(--t1)}
+.sb-item.active{background:var(--navy);color:#fff}
+.sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;flex-shrink:0;opacity:.7}
+.sb-item.active svg{opacity:1}
+.sb-div{height:1px;background:var(--border);margin:8px 14px}
+ 
+/* Sidebar file card */
+.sb-file{background:var(--navy);border-radius:var(--r);padding:12px;margin:0 10px 8px;color:#fff}
+.sfc-lbl{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:8px}
+.sfc-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sfc-row:last-child{border-bottom:none}
+.sfc-k{color:rgba(255,255,255,.5)}
+.sfc-v{font-weight:600;font-family:monospace;font-size:11px}
+ 
+/* Sidebar progress */
+.sb-prog{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:11px;margin:0 10px}
+.sbp-hd{font:600 10px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);margin-bottom:7px}
+.sbp-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:9px}
+.sbp-fill{height:100%;background:var(--ok);border-radius:2px;transition:width .4s ease}
+.sbp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.sbp-s{text-align:center;padding:5px 3px;border-radius:5px}
+.sbp-s.ok{background:var(--ok-bg)}.sbp-s.doc{background:var(--doc-bg)}.sbp-s.sign{background:var(--sign-bg)}
+.sbp-n{font-size:15px;font-weight:700}
+.sbp-s.ok .sbp-n{color:var(--ok)}.sbp-s.doc .sbp-n{color:var(--doc)}.sbp-s.sign .sbp-n{color:var(--sign)}
+.sbp-l{font:700 8px/1 inherit;text-transform:uppercase;letter-spacing:.04em;color:var(--t4);margin-top:1px}
+ 
+/* MAIN */
+.main{padding:22px;overflow-y:auto}
+.pg{display:none}.pg.active{display:block}
+.ph{margin-bottom:18px}
+.ph-title{font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.025em;margin-bottom:2px}
+.ph-sub{font-size:12px;color:var(--t3);font-family:monospace}
+ 
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden}
+.card-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.chic{width:27px;height:27px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.chic-navy{background:var(--ph-bg);color:var(--ph-t)}
+.chic-green{background:var(--nu-bg);color:var(--nu-t)}
+.chic-purple{background:var(--mu-bg);color:var(--mu-t)}
+.card-hd-t{font:600 13px/1 inherit;color:var(--t1)}
+.card-hd-r{margin-left:auto;font-size:11px;color:var(--t3)}
+body.ar .card-hd-r{margin-left:0;margin-right:auto}
+.card-bd{padding:16px}
+ 
+/* FORM */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fgrid .full{grid-column:1/-1}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font:700 10px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
+.req{color:#EF4444}
+.fi,.fs{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--r);font:13px/1 inherit;color:var(--t1);background:var(--surface);outline:none;transition:border-color .14s,box-shadow .14s;direction:inherit;-webkit-appearance:none;appearance:none}
+.fi:focus,.fs:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,107,.1)}
+.fhint{font-size:11px;color:var(--t4)}
+ 
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--r);border:none;font:600 12px/1 inherit;cursor:pointer;transition:all .16s;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0}
+.btn-p{background:var(--navy);color:#fff}
+.btn-p:hover{background:var(--navy-l);box-shadow:0 3px 10px rgba(26,58,107,.25)}
+.btn-p:disabled{background:var(--border);color:var(--t4);cursor:not-allowed;transform:none;box-shadow:none}
+.btn-g{background:var(--surface);color:var(--t2);border:1.5px solid var(--border)}
+.btn-g:hover{background:var(--surface2);border-color:var(--border2)}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-ok:hover{background:#085F5B}
+.btn-ok:disabled{opacity:.5;cursor:not-allowed}
+.btn-full{width:100%;justify-content:center;padding:10px}
+ 
+/* UPLOAD */
+.upload-z{border:2px dashed var(--border2);border-radius:var(--rl);padding:30px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.upload-z:hover,.upload-z.over{border-color:var(--navy);background:var(--ph-bg)}
+[data-theme=dark] .upload-z:hover{background:rgba(26,58,107,.15)}
+.u-ic{width:42px;height:42px;background:var(--ph-bg);border-radius:var(--r);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.u-ic svg{width:20px;height:20px;stroke:var(--navy);fill:none;stroke-width:1.75}
+[data-theme=dark] .u-ic{background:rgba(26,58,107,.3)}
+[data-theme=dark] .u-ic svg{stroke:var(--ph-t)}
+.u-t{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:3px}
+.u-s{font-size:11px;color:var(--t3)}
+.ptl{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:12px}
+.ptl-hd{display:grid;grid-template-columns:1.4fr 1fr 1.5fr 80px;gap:8px;padding:8px 14px;background:var(--navy);font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.75)}
+.ptl-body{max-height:240px;overflow-y:auto}
+.pt-row{display:grid;grid-template-columns:1.4fr 1fr 1.5fr 80px;gap:8px;padding:9px 14px;font-size:12px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .1s}
+.pt-row:last-child{border-bottom:none}
+.pt-row:hover{background:var(--surface2)}
+.pt-row.done{opacity:.45}
+.pt-fn{font-weight:700;font-family:monospace;color:var(--navy-l);font-size:12px}
+[data-theme=dark] .pt-fn{color:var(--ph-t)}
+.badge{display:inline-flex;align-items:center;font:700 9px/1 inherit;text-transform:uppercase;padding:2px 7px;border-radius:20px;letter-spacing:.04em}
+.b-pend{background:var(--sign-bg);color:var(--sign-t)}
+.b-done{background:var(--ok-bg);color:var(--ok-t)}
+.idiv{display:flex;align-items:center;gap:8px;margin:11px 0 8px;font-size:11px;color:var(--t4)}
+.idiv-line{flex:1;height:1px;background:var(--border)}
+ 
+/* LEGEND */
+.legend{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);flex-wrap:wrap}
+.lg-lbl{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.07em;color:var(--t4);flex-shrink:0}
+.lg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
+.tbadge{display:inline-flex;align-items:center;font:700 8px/1 inherit;letter-spacing:.04em;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.tbadge-e{background:var(--ph-bg);color:var(--ph-t)}
+.tbadge-p{background:var(--mu-bg);color:var(--mu-t)}
+ 
+/* SECTION BOX */
+.cl-sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
+.cl-sh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.cl-sh.ph{background:var(--ph-bg)}.cl-sh.mu{background:var(--mu-bg)}.cl-sh.nu{background:var(--nu-bg)}.cl-sh.op{background:var(--op-bg)}
+.cl-sh-name{font:700 11px/1 inherit;text-transform:uppercase;letter-spacing:.07em}
+.ph .cl-sh-name{color:var(--ph-t)}.mu .cl-sh-name{color:var(--mu-t)}.nu .cl-sh-name{color:var(--nu-t)}.op .cl-sh-name{color:var(--op-t)}
+.cl-sh-cnt{margin-left:auto;font-size:11px;color:var(--t3);font-family:monospace}
+body.ar .cl-sh-cnt{margin-left:0;margin-right:auto}
+ 
+/* PAPER BLOCK */
+.paper-blk{margin:6px 10px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.paper-blk-hd{padding:5px 11px;font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.07em;color:var(--t4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px}
+.paper-blk-hd svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+ 
+/* ROW */
+.cl-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);position:relative;transition:background .1s}
+.cl-row:last-child{border-bottom:none}
+.cl-row:hover{background:var(--surface2)}
+.cl-row.s-ok{background:rgba(10,122,79,.03)}
+.cl-row.s-doc{background:rgba(185,28,28,.04)}
+.cl-row.s-sign{background:rgba(180,83,9,.04)}
+.cl-row.s-na{background:var(--na-bg);opacity:.6}
+.cl-row.key-row{background:rgba(239,68,68,.03)}
+[data-theme=dark] .cl-row.key-row{background:rgba(239,68,68,.06)}
+ 
+/* Left stripe */
+.stripe{width:2.5px;flex-shrink:0;border-radius:2px;align-self:stretch;background:var(--border);margin-top:1px;transition:background .15s}
+.s-ok .stripe{background:var(--ok)}.s-doc .stripe{background:var(--doc)}.s-sign .stripe{background:var(--sign)}.s-na .stripe{background:var(--na-b)}
+body.ar .stripe{order:99}
+ 
+/* Type badge */
+.type-col{display:flex;gap:3px;flex-shrink:0;margin-top:1px;flex-direction:column;align-items:flex-start;min-width:30px}
+ 
+/* E·verify — color only, no border text badge */
+.cl-row.ev-row{background:rgba(194,65,12,.03)}
+[data-theme=dark] .cl-row.ev-row{background:rgba(194,65,12,.07)}
+.cl-row.ev-row .tbadge-e{background:var(--ev-bg);color:var(--ev-t)}
+ 
+/* Content */
+.cl-body{flex:1;min-width:0}
+.cl-name{font:500 13px/1.35 inherit;color:var(--t1);display:flex;align-items:flex-start;flex-wrap:wrap;gap:5px}
+.cl-name-txt{min-width:0}
+.cl-name.na-line{text-decoration:line-through;color:var(--t4)}
+ 
+/* Tooltip */
+.tt{position:relative;display:inline-flex;vertical-align:middle;margin-left:3px;flex-shrink:0}
+body.ar .tt{margin-left:0;margin-right:3px}
+.tt-btn{width:14px;height:14px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--t4);font:700 8px/14px inherit;text-align:center;cursor:help;display:inline-flex;align-items:center;justify-content:center;transition:all .14s}
+.tt-btn:hover,.tt-btn:focus{background:#0D1B2E;color:#fff;border-color:#0D1B2E;outline:none}
+.tt-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0D1B2E;color:rgba(255,255,255,.92);font:400 11px/1.45 inherit;padding:7px 10px;border-radius:6px;width:210px;z-index:100;white-space:normal;pointer-events:none}
+.tt-box::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#0D1B2E}
+.tt:hover .tt-box,.tt:focus-within .tt-box{display:block}
+ 
+/* Actions */
+.cl-acts{display:flex;gap:3px;flex-shrink:0;margin-left:auto;padding-top:1px}
+body.ar .cl-acts{margin-left:0;margin-right:auto}
+.sbtn{padding:4px 9px;border-radius:5px;border:1.5px solid var(--border);background:var(--surface);font:600 10px/1 inherit;color:var(--t4);cursor:pointer;transition:all .12s;white-space:nowrap}
+.sbtn:hover{border-color:var(--border2);color:var(--t2)}
+.sbtn.aok{background:var(--ok-bg);border-color:var(--ok-b);color:var(--ok-t)}
+.sbtn.adoc{background:var(--doc-bg);border-color:var(--doc-b);color:var(--doc-t)}
+.sbtn.asign{background:var(--sign-bg);border-color:var(--sign-b);color:var(--sign-t)}
+.sbtn.ana{background:var(--na-bg);border-color:var(--na-b);color:var(--na)}
+ 
+/* Bottom: resp + notes */
+.cl-bot{margin-top:9px;padding-top:8px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:6px}
+.resp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.resp-lbl{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.06em;color:var(--t4);flex-shrink:0}
+.resp-fixed{font:600 11px/1 inherit;padding:3px 9px;border-radius:4px;border:1px solid var(--na-b);background:var(--na-bg);color:var(--na)}
+.resp-sel,.resp-inp{border:1.5px solid var(--border);border-radius:5px;padding:5px 8px;font:12px/1 inherit;color:var(--t1);background:var(--surface);outline:none;transition:border-color .14s}
+.resp-sel:focus,.resp-inp:focus{border-color:var(--navy)}
+.resp-sel{flex:1;min-width:130px}
+.resp-inp{flex:1;min-width:130px;direction:inherit}
+.notes-inp{width:100%;border:1.5px solid var(--border);border-radius:5px;padding:5px 8px;font:12px/1.4 inherit;color:var(--t1);background:var(--surface);outline:none;resize:none;min-height:30px;direction:inherit}
+.notes-inp:focus{border-color:var(--navy)}
+ 
+/* CONSENTS MULTI-FORM */
+.cons-wrap{margin-top:8px}
+.cons-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 10px;margin-bottom:6px;display:flex;flex-direction:column;gap:6px}
+.cons-hd{display:flex;align-items:center;justify-content:space-between}
+.cons-num{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t4)}
+.cons-rm{background:none;border:none;color:var(--doc);cursor:pointer;font-size:14px;padding:0;line-height:1;transition:opacity .14s}
+.cons-rm:hover{opacity:.7}
+.cons-row{display:flex;gap:6px;flex-wrap:wrap}
+.cons-row .resp-inp,.cons-row .resp-sel{flex:1;min-width:100px}
+.add-cons{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:5px;border:1.5px dashed var(--border2);background:transparent;color:var(--t3);font:500 11px/1 inherit;cursor:pointer;transition:all .14s;margin-top:2px}
+.add-cons:hover{border-color:var(--navy);color:var(--navy)}
+ 
+/* REPORT */
+.rpt-banner{background:var(--navy);border-radius:var(--rl);padding:18px 22px;color:#fff;display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.rpt-ic{width:38px;height:38px;background:rgba(255,255,255,.1);border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rpt-ic svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.75}
+.rpt-t{font-size:15px;font-weight:700;margin-bottom:2px}
+.rpt-s{font-size:11px;color:rgba(255,255,255,.55);font-family:monospace}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center}
+.kpi-n{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.kpi-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);margin-top:2px}
+.kpi-ok .kpi-n{color:var(--ok)}.kpi-doc .kpi-n{color:var(--doc)}.kpi-sign .kpi-n{color:var(--sign)}.kpi-na .kpi-n{color:var(--t4)}
+.def-tbl{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.def-hd{display:grid;grid-template-columns:72px 1fr 90px 140px;gap:10px;padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
+.def-row{display:grid;grid-template-columns:72px 1fr 90px 140px;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);align-items:start;font-size:13px;transition:background .1s}
+.def-row:last-child{border-bottom:none}
+.def-row:hover{background:var(--surface2)}
+.def-bdg{font:700 9px/1 inherit;text-transform:uppercase;padding:3px 8px;border-radius:20px;letter-spacing:.04em}
+.db-doc{background:var(--doc-bg);color:var(--doc-t)}.db-sign{background:var(--sign-bg);color:var(--sign-t)}
+.def-name{font-weight:500;color:var(--t1)}.def-sec{font-size:11px;color:var(--t3);margin-top:2px}
+.def-note{font-size:11px;color:var(--t3);margin-top:3px;font-style:italic}
+.def-resp{font-weight:600;color:var(--t2);font-size:12px}
+.rpt-actions{display:flex;gap:8px;flex-wrap:wrap}
+ 
+/* SETTINGS */
+.stabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:14px}
+.stab{flex:1;padding:7px 8px;border:none;border-radius:6px;background:none;font:500 12px/1 inherit;color:var(--t3);cursor:pointer;transition:all .14s;text-align:center}
+.stab.active{background:var(--surface);color:var(--navy);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.spec-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+.spec-tbl th{background:var(--surface2);padding:8px 11px;text-align:left;font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);border-bottom:2px solid var(--border)}
+body.ar .spec-tbl th{text-align:right}
+.spec-tbl td{padding:8px 11px;border-bottom:1px solid var(--border);font-size:13px;color:var(--t1)}
+.spec-tbl tr:last-child td{border-bottom:none}
+.tag-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:28px;align-content:flex-start}
+.tag{display:flex;align-items:center;gap:5px;background:var(--navy);color:#fff;padding:4px 10px;border-radius:20px;font:600 11px/1 inherit}
+[data-theme=dark] .tag{background:var(--ph-t)}
+.tag-x{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:13px;padding:0;line-height:1}
+.tag-x:hover{color:#fff}
+.add-row{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end}
+.add-row .fi{flex:1;min-width:110px}
+ 
+/* Settings checklist editor */
+.cl-editor{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.cle-hd{display:grid;grid-template-columns:1fr 80px 120px 100px 100px 36px;gap:8px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
+.cle-row{display:grid;grid-template-columns:1fr 80px 120px 100px 100px 36px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
+.cle-row:last-child{border-bottom:none}
+.cle-name{font-weight:500;color:var(--t1);font-size:12px}
+.cle-sel{border:1.5px solid var(--border);border-radius:5px;padding:4px 6px;font:11px/1 inherit;color:var(--t1);background:var(--surface);outline:none;width:100%}
+.cle-sel:focus{border-color:var(--navy)}
+.cle-rm{background:none;border:none;color:var(--doc);cursor:pointer;font-size:15px;padding:0;line-height:1}
+ 
+/* TOASTS */
+.toasts{position:fixed;bottom:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+body.ar .toasts{right:auto;left:18px}
+.toast{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--r);font:500 12px/1 inherit;max-width:300px;pointer-events:all;animation:tin .3s cubic-bezier(.34,1.56,.64,1)}
+.toast.ok{background:#065F46;color:#fff}.toast.err{background:#991515;color:#fff}
+.toast.warn{background:#92400E;color:#fff}.toast.info{background:var(--navy);color:#fff}
+@keyframes tin{from{transform:translateY(8px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.empty-st{text-align:center;padding:36px 20px;color:var(--t4)}
+.empty-ic{font-size:32px;margin-bottom:8px}
+.empty-t{font-size:14px;font-weight:600;color:var(--t2);margin-bottom:3px}
+@media(max-width:768px){.shell{grid-template-columns:1fr}.sidebar{display:none}.fgrid{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.def-hd,.def-row{grid-template-columns:60px 1fr 80px}}
+@media print{.topbar,.sidebar,.btn,.toasts,.rpt-actions{display:none!important}.shell{grid-template-columns:1fr}.main{padding:0}}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div class="header-icon">🏥</div>
-  <div>
-    <h1>أداة تحليل السجلات الطبية</h1>
-    <p>Patient Deficiency Checklist</p>
+ 
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="tb-logo" href="#" onclick="return false">
+    <div class="tb-mark">MR</div>
+    <div class="tb-name">MedRecord <span>Analysis</span></div>
+  </a>
+  <div class="tb-gap"></div>
+  <button class="tb-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">
+    <svg id="theme-ic" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+  <button class="tb-btn" onclick="toggleLang()" id="lang-btn" title="Language">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  </button>
+  <button class="tb-btn" onclick="nav('settings')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="tr" data-k="settings">Settings</span>
+  </button>
+  <button class="tb-btn" onclick="newFile()" style="background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.3)">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="tr" data-k="new_file">New File</span>
+  </button>
+</div>
+ 
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-sec">
+    <div class="sb-lbl tr" data-k="nav">Navigation</div>
+    <button class="sb-item active" id="nav-home" onclick="nav('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="tr" data-k="home">Home</span>
+    </button>
+    <button class="sb-item" id="nav-analysis" onclick="nav('analysis')">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="tr" data-k="analysis">Analysis</span>
+    </button>
+    <button class="sb-item" id="nav-report" onclick="nav('report')">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span class="tr" data-k="report">Report</span>
+    </button>
+    <button class="sb-item" id="nav-settings" onclick="nav('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="tr" data-k="settings">Settings</span>
+    </button>
   </div>
-  <div style="margin-right: auto;">
-    <button class="manage-staff-btn" onclick="openStaffModal()">👥 الكوادر</button>
-    <button class="btn btn-reset" onclick="resetAll()">ملف جديد ↺</button>
+  <div class="sb-div"></div>
+  <div id="sb-file" class="hidden">
+    <div class="sb-file">
+      <div class="sfc-lbl tr" data-k="cur_file">Current File</div>
+      <div class="sfc-row"><span class="sfc-k tr" data-k="file_n">File #</span><span class="sfc-v" id="sb-fn">—</span></div>
+      <div class="sfc-row"><span class="sfc-k tr" data-k="type">Type</span><span class="sfc-v" id="sb-type">—</span></div>
+      <div class="sfc-row"><span class="sfc-k tr" data-k="dc">Discharge</span><span class="sfc-v" id="sb-dc">—</span></div>
+    </div>
+    <div class="sb-prog">
+      <div class="sbp-hd tr" data-k="progress">Progress</div>
+      <div class="sbp-bar"><div class="sbp-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="sbp-grid">
+        <div class="sbp-s ok"><div class="sbp-n" id="pg-ok">0</div><div class="sbp-l">Done</div></div>
+        <div class="sbp-s doc"><div class="sbp-n" id="pg-doc">0</div><div class="sbp-l">Doc</div></div>
+        <div class="sbp-s sign"><div class="sbp-n" id="pg-sign">0</div><div class="sbp-l">Sign</div></div>
+      </div>
+    </div>
+  </div>
+</nav>
+ 
+<main class="main">
+<!-- HOME -->
+<div class="pg active" id="pg-home">
+  <div class="ph">
+    <div class="ph-title tr" data-k="welcome">Welcome</div>
+    <div class="ph-sub tr" data-k="welcome_sub">Upload patient list from Careware or enter file number manually</div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="chic chic-navy"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+      <span class="card-hd-t tr" data-k="upload_title">Upload Patient List (Excel)</span>
+    </div>
+    <div class="card-bd">
+      <div class="upload-z" id="upload-z"
+        onclick="document.getElementById('xl-inp').click()"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="event.preventDefault();this.classList.remove('over');handleDrop(event)">
+        <div class="u-ic"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+        <div class="u-t tr" data-k="click_upload">Click or drag Excel file here</div>
+        <div class="u-s tr" data-k="export_hint">Export from Careware → Upload here</div>
+      </div>
+      <input type="file" id="xl-inp" style="display:none" accept=".xlsx,.xls,.csv" onchange="handleXL(this)">
+      <div id="ptl-wrap" class="hidden" style="margin-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+          <span style="font-size:13px;font-weight:600;color:var(--t1)" class="tr" data-k="sel_pt">Select patient to analyze</span>
+          <span style="font-size:11px;color:var(--t3)" id="pt-cnt"></span>
+        </div>
+        <div class="ptl">
+          <div class="ptl-hd">
+            <span class="tr" data-k="file_n">File #</span>
+            <span class="tr" data-k="dc_date">Discharge</span>
+            <span class="tr" data-k="dept">Department</span>
+            <span class="tr" data-k="status">Status</span>
+          </div>
+          <div class="ptl-body" id="pt-rows"></div>
+        </div>
+      </div>
+      <div class="idiv"><div class="idiv-line"></div><span class="tr" data-k="or_manual">or enter manually</span><div class="idiv-line"></div></div>
+      <div style="display:flex;gap:8px">
+        <input class="fi" id="manual-fn" style="flex:1" placeholder="300443260">
+        <button class="btn btn-g" onclick="selManual()"><span class="tr" data-k="continue">Continue</span> →</button>
+      </div>
+    </div>
   </div>
 </div>
-
-<div class="container">
-
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active" id="s1"><div class="step-num">١</div><span>بيانات الملف</span></div>
-    <div class="step-divider"></div>
-    <div class="step" id="s2"><div class="step-num">٢</div><span>التحليل</span></div>
-    <div class="step-divider"></div>
-    <div class="step" id="s3"><div class="step-num">٣</div><span>التقرير</span></div>
-  </div>
-
-  <!-- Step 1: File Info -->
-  <div id="step1">
+ 
+<!-- ANALYSIS -->
+<div class="pg" id="pg-analysis">
+  <div id="setup-wrap">
+    <div class="ph">
+      <div class="ph-title tr" data-k="file_info">File Information</div>
+      <div class="ph-sub tr" data-k="file_info_sub">Complete all fields to begin analysis</div>
+    </div>
     <div class="card">
-      <div class="card-title">📋 بيانات الملف</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>رقم الملف *</label>
-          <input type="text" id="fileNum" placeholder="مثال: 300443260" />
+      <div class="card-bd">
+        <div class="fgrid">
+          <div class="fg"><label class="fl"><span class="tr" data-k="file_n">File Number</span> <span class="req">*</span></label><input class="fi" id="f-num" readonly style="font-family:monospace;font-weight:700;letter-spacing:.02em"></div>
+          <div class="fg"><label class="fl"><span class="tr" data-k="list_type">List Type</span> <span class="req">*</span></label>
+            <select class="fs" id="f-type" onchange="onTypeChange()">
+              <option value="">-- Select --</option>
+              <option value="ICU">ICU</option>
+              <option value="Surgery">Surgery</option>
+              <option value="OBGYNE">OB/GYNE</option>
+              <option value="Pediatric">Pediatrics</option>
+              <option value="IM">Internal Medicine</option>
+              <option value="NICU">NICU</option>
+              <option value="Nursery">Nursery</option>
+              <option value="Endoscopy">Endoscopy</option>
+              <option value="ESWL">ESWL</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl"><span class="tr" data-k="specialty">Specialty</span> <span class="req">*</span></label><select class="fs" id="f-spec"></select></div>
+          <div class="fg"><label class="fl tr" data-k="dc_type">Discharge Type</label>
+            <select class="fs" id="f-dc">
+              <option value="discharged">Discharged</option>
+              <option value="transferred_ward">Transferred to Ward</option>
+              <option value="transferred_hospital">Transferred to Hospital</option>
+              <option value="dama">DAMA</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl tr" data-k="dc_date">Discharge Date</label><input class="fi" type="date" id="f-date"></div>
+          <div class="fg"><label class="fl tr" data-k="doctor_mrp">Doctor Name (MRP)</label><input class="fi" id="f-doc" placeholder="Dr. ..."></div>
+          <div class="fg hidden" id="f-diab-w"><label class="fl tr" data-k="sugar">Blood Sugar Status</label>
+            <select class="fs" id="f-diab">
+              <option value="na">Not Applicable</option>
+              <option value="stable">Stable</option>
+              <option value="unstable">Unstable ⚠️</option>
+            </select>
+          </div>
+          <div class="fg hidden" id="f-deliv-w"><label class="fl tr" data-k="delivery">Delivery Type</label>
+            <select class="fs" id="f-deliv">
+              <option value="normal">Normal Delivery</option>
+              <option value="csection">C-Section</option>
+            </select>
+          </div>
+          <div class="fg hidden" id="f-trans-w"><label class="fl tr" data-k="transfer_q">Transferred to ward during stay?</label>
+            <select class="fs" id="f-trans">
+              <option value="no">No</option>
+              <option value="yes">Yes — Transfer Summary required</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl tr" data-k="analyst">Analyst Name</label><input class="fi" id="f-analyst" placeholder="Your name..."></div>
         </div>
-        <div class="form-group">
-          <label>نوع الملف *</label>
-          <select id="fileType">
-            <option value="">-- اختر --</option>
-            <option value="icu">عناية مركزة (ICU)</option>
-            <option value="surgery">عمليات (Surgery)</option>
-            <option value="internal">داخلية (Internal Medicine)</option>
-            <option value="pediatric">أطفال (Pediatric)</option>
-            <option value="obstetric">ولادة (Obstetric)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>نوع الخروج *</label>
-          <select id="dischargeType">
-            <option value="">-- اختر --</option>
-            <option value="discharged">خروج عادي (Discharged)</option>
-            <option value="transferred_ward">تحويل لقسم (Transferred to Ward)</option>
-            <option value="transferred_hospital">تحويل لمستشفى (Transferred to Hospital)</option>
-            <option value="dama">DAMA</option>
-            <option value="expired">وفاة (Expired)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>حالة السكر</label>
-          <select id="diabeticStatus">
-            <option value="na">غير منطبق</option>
-            <option value="stable">مستقر (Stable)</option>
-            <option value="unstable">مو مستقر (Unstable)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>اسم الطبيب المسؤول عن الحالة</label>
-          <input type="text" id="mainDoc" placeholder="د. ..." />
-        </div>
-        <div class="form-group">
-          <label>تاريخ الخروج</label>
-          <input type="date" id="dischargeDate" />
-        </div>
-        <div class="form-group">
-          <label>اسم المحلل *</label>
-          <input type="text" id="analystName" placeholder="اسمك..." />
-        </div>
+        <button class="btn btn-p btn-full" id="start-btn" onclick="startAnalysis()" disabled style="margin-top:14px">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="tr" data-k="start_analysis">Start Analysis</span>
+        </button>
       </div>
-      <button class="btn btn-primary" onclick="startAnalysis()" id="startBtn" disabled>
-        بدء التحليل ←
-      </button>
     </div>
   </div>
-
-  <!-- Step 2: Checklist -->
-  <div id="step2" class="hidden">
-    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-
-    <div class="file-info-bar" id="fileInfoBar"></div>
-
-    <div class="card" id="checklistContainer">
-      <!-- Generated dynamically -->
-    </div>
-
-    <button class="btn btn-primary" onclick="showReport()">عرض التقرير →</button>
-  </div>
-
-  <!-- Step 3: Report -->
-  <div id="step3" class="hidden">
-    <div class="file-info-bar" id="fileInfoBar2"></div>
-    <div class="summary-card">
-      <div class="card-title">📊 ملخص التحليل</div>
-      <div class="summary-stats">
-        <div class="stat-box stat-complete">
-          <div class="num" id="statComplete">0</div>
-          <div class="lbl">مكتمل</div>
-        </div>
-        <div class="stat-box stat-doc">
-          <div class="num" id="statDoc">0</div>
-          <div class="lbl">نقص وثيقة</div>
-        </div>
-        <div class="stat-box stat-sign">
-          <div class="num" id="statSign">0</div>
-          <div class="lbl">نقص توقيع</div>
-        </div>
+ 
+  <div id="cl-wrap" class="hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div class="ph-title" id="cl-title" style="font-size:17px;margin-bottom:1px"></div>
+        <div class="ph-sub" id="cl-sub"></div>
       </div>
-
-      <div class="deficiency-list" id="deficiencyList"></div>
-
-      <button class="print-btn" onclick="window.print()">🖨️ طباعة التقرير</button>
-      <button class="print-btn" id="saveBtn" style="margin-top:8px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none" onclick="saveToSheets()">☁️ حفظ في Google Sheets</button>
-      <div id="saveStatus" style="text-align:center;font-size:12px;margin-top:8px;min-height:20px"></div>
-      <button class="print-btn" style="margin-top:8px" onclick="backToChecklist()">← العودة للتحليل</button>
-    </div>
-  </div>
-
-
-<!-- Staff Modal -->
-<div id="staffModal" class="modal-overlay hidden" onclick="if(event.target===this)closeStaffModal()">
-  <div class="modal">
-    <div class="modal-title">
-      👥 إدارة أسماء الكوادر
-      <button onclick="closeStaffModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">×</button>
-    </div>
-    <div class="modal-section">
-      <div class="modal-section-title">👨‍⚕️ الأطباء</div>
-      <div class="staff-tags" id="doctorsList"></div>
-      <div class="staff-add-row">
-        <input id="doctorsInput" placeholder="اسم الطبيب..." onkeydown="if(event.key==='Enter')submitStaff('doctors')" />
-        <button class="staff-add-btn" onclick="submitStaff('doctors')">إضافة</button>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-p" onclick="tryReport()"><span class="tr" data-k="view_report">View Report</span> <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+        <button class="btn btn-g" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span class="tr" data-k="back">Back</span></button>
       </div>
     </div>
-    <div class="modal-section">
-      <div class="modal-section-title">👩‍⚕️ التمريض</div>
-      <div class="staff-tags" id="nursesList"></div>
-      <div class="staff-add-row">
-        <input id="nursesInput" placeholder="اسم الممرض/ة..." onkeydown="if(event.key==='Enter')submitStaff('nurses')" />
-        <button class="staff-add-btn" onclick="submitStaff('nurses')">إضافة</button>
-      </div>
+    <div class="legend">
+      <span class="lg-lbl tr" data-k="doc_type">Document Type</span>
+      <div class="lg-item"><span class="tbadge tbadge-e">E</span> <span class="tr" data-k="e_auto">Electronic — from Excel</span></div>
+      <div class="lg-item" style="padding:3px 8px;border-radius:3px;background:var(--ev-bg);border:1px solid var(--ev-b);font-size:11px;color:var(--ev-t)"><span class="tr" data-k="e_verify">E — Verify in system</span></div>
+      <div class="lg-item"><span class="tbadge tbadge-p">P</span> <span class="tr" data-k="p_paper">Paper — physical file</span></div>
+      <div class="lg-item" style="padding:3px 8px;border-radius:3px;background:rgba(239,68,68,.06);border-left:3px solid #EF4444;font-size:11px;color:var(--doc)"><span class="tr" data-k="key_mand">Mandatory item</span></div>
     </div>
-    <button onclick="closeStaffModal()" class="btn btn-primary" style="margin-top:8px">حفظ وإغلاق</button>
+    <div id="cl-content"></div>
+    <div style="display:flex;gap:7px;margin-top:14px">
+      <button class="btn btn-p" style="flex:1;justify-content:center" onclick="tryReport()"><span class="tr" data-k="view_report">View Report</span> <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <button class="btn btn-g" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span class="tr" data-k="back">Back</span></button>
+    </div>
   </div>
 </div>
-
+ 
+<!-- REPORT -->
+<div class="pg" id="pg-report">
+  <div class="rpt-banner">
+    <div class="rpt-ic"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+    <div>
+      <div class="rpt-t tr" data-k="report_title">Analysis Report</div>
+      <div class="rpt-s" id="rpt-sub">—</div>
+    </div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi kpi-ok"><div class="kpi-n" id="s-ok">0</div><div class="kpi-l tr" data-k="complete">Complete</div></div>
+    <div class="kpi kpi-doc"><div class="kpi-n" id="s-doc">0</div><div class="kpi-l">Doc Deficiency</div></div>
+    <div class="kpi kpi-sign"><div class="kpi-n" id="s-sign">0</div><div class="kpi-l">Sign Deficiency</div></div>
+    <div class="kpi kpi-na"><div class="kpi-n" id="s-na">0</div><div class="kpi-l">N/A</div></div>
+  </div>
+  <div class="def-tbl">
+    <div class="def-hd">
+      <span class="tr" data-k="type">Type</span>
+      <span class="tr" data-k="document">Document</span>
+      <span class="tr" data-k="section">Section</span>
+      <span class="tr" data-k="responsible">Responsible</span>
+    </div>
+    <div id="def-rows"></div>
+  </div>
+  <div class="rpt-actions">
+    <button class="btn btn-ok" id="save-btn" onclick="saveSheets()">
+      <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      <span class="tr" data-k="save_sheets">Save to Google Sheets</span>
+    </button>
+    <button class="btn btn-g" onclick="window.print()">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span class="tr" data-k="print">Print</span>
+    </button>
+    <button class="btn btn-g" onclick="nav('analysis')">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      <span class="tr" data-k="back_analysis">Back to Analysis</span>
+    </button>
+  </div>
 </div>
-
+ 
+<!-- SETTINGS -->
+<div class="pg" id="pg-settings">
+  <div class="ph">
+    <div class="ph-title tr" data-k="settings">Settings</div>
+    <div class="ph-sub tr" data-k="settings_sub">Manage staff, specialties, checklists and configuration</div>
+  </div>
+  <div class="stabs">
+    <button class="stab active" id="stab-staff" onclick="showStab('staff')">👥 <span class="tr" data-k="staff">Staff</span></button>
+    <button class="stab" id="stab-spec" onclick="showStab('spec')">🏥 <span class="tr" data-k="specialties">Specialties</span></button>
+    <button class="stab" id="stab-cl" onclick="showStab('cl')">📋 <span class="tr" data-k="checklists">Checklists</span></button>
+    <button class="stab" id="stab-cfg" onclick="showStab('cfg')">⚙ <span class="tr" data-k="config">Config</span></button>
+  </div>
+ 
+  <!-- Staff -->
+  <div id="sc-staff">
+    <div class="card">
+      <div class="card-hd"><div class="chic chic-navy"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="card-hd-t tr" data-k="physicians">Physicians</span></div>
+      <div class="card-bd">
+        <div class="tag-list" id="doc-tags"></div>
+        <div class="add-row">
+          <input class="fi" id="new-doc" placeholder="Dr. Full Name">
+          <select class="fs" id="new-doc-spec" style="max-width:160px"></select>
+          <button class="btn btn-p" onclick="addStaff('doc')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tr" data-k="add">Add</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="chic chic-green"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="card-hd-t tr" data-k="nurses">Nurses</span></div>
+      <div class="card-bd">
+        <div class="tag-list" id="nur-tags"></div>
+        <div class="add-row">
+          <input class="fi" id="new-nur" placeholder="Nurse Full Name">
+          <button class="btn btn-p" onclick="addStaff('nur')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tr" data-k="add">Add</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Specialties -->
+  <div id="sc-spec" class="hidden">
+    <div class="card">
+      <div class="card-hd"><div class="chic chic-purple"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><span class="card-hd-t tr" data-k="specialties">Specialties & List Types</span></div>
+      <div class="card-bd">
+        <table class="spec-tbl" id="spec-tbl"></table>
+        <div class="add-row">
+          <input class="fi" id="new-spec-name" placeholder="Specialty name...">
+          <select class="fs" id="new-spec-type" style="max-width:140px">
+            <option value="ICU">ICU</option><option value="Surgery">Surgery</option>
+            <option value="OBGYNE">OB/GYNE</option><option value="Pediatric">Pediatrics</option>
+            <option value="IM">Internal Medicine</option><option value="NICU">NICU</option>
+            <option value="Nursery">Nursery</option><option value="Endoscopy">Endoscopy</option>
+            <option value="ESWL">ESWL</option>
+          </select>
+          <button class="btn btn-p" onclick="addSpec()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="tr" data-k="add">Add</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Checklists editor -->
+  <div id="sc-cl" class="hidden">
+    <div class="card">
+      <div class="card-hd">
+        <div class="chic chic-navy"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/></svg></div>
+        <span class="card-hd-t tr" data-k="edit_checklists">Edit Checklists</span>
+        <div class="card-hd-r">
+          <select class="fs" id="cl-editor-type" onchange="renderCLEditor()" style="font-size:11px;padding:4px 8px">
+            <option value="ICU">ICU</option><option value="Surgery">Surgery</option>
+            <option value="OBGYNE">OB/GYNE</option><option value="Pediatric">Pediatrics</option>
+            <option value="IM">Internal Medicine</option><option value="NICU">NICU</option>
+            <option value="Nursery">Nursery</option><option value="Endoscopy">Endoscopy</option>
+            <option value="ESWL">ESWL</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-bd" style="padding:0">
+        <div class="cl-editor">
+          <div class="cle-hd">
+            <span>Item Name</span><span>Type</span><span>Condition</span><span>Responsible</span><span>Verify?</span><span></span>
+          </div>
+          <div id="cl-editor-body"></div>
+        </div>
+        <div style="padding:12px 16px;display:flex;gap:8px">
+          <button class="btn btn-p" onclick="saveCLEdits()"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg><span class="tr" data-k="save">Save Changes</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Config -->
+  <div id="sc-cfg" class="hidden">
+    <div class="card">
+      <div class="card-hd"><div class="chic chic-navy"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <span class="card-hd-t tr" data-k="config">Configuration</span></div>
+      <div class="card-bd">
+        <div class="fgrid">
+          <div class="fg"><label class="fl tr" data-k="delinquency_target">Delinquency Target (%)</label><input class="fi" type="number" id="cfg-delinq" value="20" min="0" max="100"><div class="fhint tr" data-k="delinquency_hint">Below this % = On Target</div></div>
+          <div class="fg"><label class="fl">Apps Script URL</label><input class="fi" id="cfg-url" placeholder="https://script.google.com/macros/s/..."><div class="fhint">Google Sheets backend URL</div></div>
+        </div>
+        <button class="btn btn-p" style="margin-top:14px" onclick="saveCfg()">
+          <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span class="tr" data-k="save_settings">Save Settings</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+</main>
+</div><!-- shell -->
+<div class="toasts" id="toasts"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ===== DATA =====
-
-const ICU_ITEMS = [
+// ═══════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════
+const TR={
+en:{nav:'Navigation',home:'Home',analysis:'Analysis',report:'Report',settings:'Settings',new_file:'New File',welcome:'Welcome',welcome_sub:'Upload patient list from Careware or enter file number manually',upload_title:'Upload Patient List (Excel)',click_upload:'Click or drag Excel file here',export_hint:'Export from Careware → Upload here',sel_pt:'Select patient to analyze',file_n:'File #',dc_date:'Discharge Date',dept:'Department',status:'Status',or_manual:'or enter manually',continue:'Continue',file_info:'File Information',file_info_sub:'Complete all fields to begin analysis',list_type:'List Type',specialty:'Specialty',dc_type:'Discharge Type',doctor_mrp:'Doctor Name (MRP)',sugar:'Blood Sugar Status',delivery:'Delivery Type',transfer_q:'Transferred to ward during stay?',analyst:'Analyst Name',start_analysis:'Start Analysis',back:'Back',view_report:'View Report',report_title:'Analysis Report',complete:'Complete',type:'Type',document:'Document',section:'Section',responsible:'Responsible',save_sheets:'Save to Google Sheets',print:'Print',back_analysis:'Back to Analysis',staff:'Staff',specialties:'Specialties',checklists:'Checklists',config:'Config',physicians:'Physicians',nurses:'Nurses',add:'Add',save:'Save Changes',kpi_targets:'KPI Targets',delinquency_target:'Delinquency Target (%)',delinquency_hint:'Below this % = On Target',save_settings:'Save Settings',settings_sub:'Manage staff, specialties, checklists and configuration',cur_file:'Current File',progress:'Progress',doc_type:'Document Type',e_auto:'Electronic — from Excel',e_verify:'E — Verify in system',p_paper:'Paper — physical file',key_mand:'Mandatory item',notes_ph:'Notes e.g. Missing: 15 March',resp_lbl:'Responsible',sel_resp:'Select...',dc:'Discharge',edit_checklists:'Edit Checklists',add_consent:'Add consent form',incomplete_warn:'items not reviewed yet. Continue?'},
+ar:{nav:'التنقل',home:'الرئيسية',analysis:'التحليل',report:'التقرير',settings:'الإعدادات',new_file:'ملف جديد',welcome:'أهلاً وسهلاً',welcome_sub:'ارفع قائمة المرضى من Careware أو أدخل رقم الملف يدوياً',upload_title:'رفع قائمة المرضى (Excel)',click_upload:'اضغط أو اسحب ملف Excel هنا',export_hint:'صدّر من Careware ← ارفع هنا',sel_pt:'اختر مريضاً للتحليل',file_n:'رقم الملف',dc_date:'تاريخ الخروج',dept:'القسم',status:'الحالة',or_manual:'أو أدخل يدوياً',continue:'متابعة',file_info:'بيانات الملف',file_info_sub:'أكمل جميع الحقول للبدء',list_type:'نوع القائمة',specialty:'التخصص',dc_type:'نوع الخروج',doctor_mrp:'اسم الطبيب المسؤول',sugar:'حالة السكر',delivery:'نوع الولادة',transfer_q:'هل تحول لقسم أثناء الإقامة؟',analyst:'اسم المحلل',start_analysis:'بدء التحليل',back:'رجوع',view_report:'عرض التقرير',report_title:'تقرير التحليل',complete:'مكتمل',type:'النوع',document:'الوثيقة',section:'القسم',responsible:'المسؤول',save_sheets:'حفظ في Google Sheets',print:'طباعة',back_analysis:'العودة للتحليل',staff:'الكوادر',specialties:'التخصصات',checklists:'القوائم',config:'الإعدادات',physicians:'الأطباء',nurses:'التمريض',add:'إضافة',save:'حفظ التغييرات',kpi_targets:'أهداف المؤشرات',delinquency_target:'الهدف المسموح للنقص (%)',delinquency_hint:'الملفات أقل من هذه النسبة = ضمن الهدف',save_settings:'حفظ الإعدادات',settings_sub:'إدارة الكوادر والتخصصات والقوائم والإعدادات',cur_file:'الملف الحالي',progress:'التقدم',doc_type:'نوع الوثيقة',e_auto:'إلكتروني — من Excel',e_verify:'إلكتروني — تحقق من النظام',p_paper:'ورقي — ملف فعلي',key_mand:'بند إلزامي',notes_ph:'ملاحظات مثال: ناقص 15 مارس',resp_lbl:'المسؤول',sel_resp:'اختر...',dc:'الخروج',edit_checklists:'تعديل القوائم',add_consent:'إضافة نموذج موافقة',incomplete_warn:'عناصر لم تُراجع. هل تريد المتابعة؟'}
+};
+ 
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let lang=localStorage.getItem('lang')||'en';
+let theme=localStorage.getItem('theme')||'light';
+let staff=JSON.parse(localStorage.getItem('staff')||'{"docs":[],"nurses":[]}');
+let specs=JSON.parse(localStorage.getItem('specs')||'null')||[
+  {name:'ICU',type:'ICU'},{name:'General Surgery',type:'Surgery'},
+  {name:'Orthopedic',type:'Surgery'},{name:'Neurosurgery',type:'Surgery'},
+  {name:'Vascular Surgery',type:'Surgery'},{name:'Plastic Surgery',type:'Surgery'},
+  {name:'E.N.T',type:'Surgery'},{name:'Urology',type:'Surgery'},
+  {name:'Ophthalmology',type:'Surgery'},{name:'OB/GYNE',type:'OBGYNE'},
+  {name:'Pediatric',type:'Pediatric'},{name:'NICU',type:'NICU'},
+  {name:'Nursery',type:'Nursery'},{name:'Internal Medicine',type:'IM'},
+  {name:'Endoscopy',type:'Endoscopy'},{name:'ESWL',type:'ESWL'}
+];
+let patients=[];
+let ctx={};
+let states={};// id→{status,resp,notes,consents:[{name,defType,resp}]}
+let clEdits={};// overrides for checklist items per type
+ 
+// Load custom checklist edits
+try{clEdits=JSON.parse(localStorage.getItem('clEdits')||'{}')}catch(e){clEdits={}}
+ 
+// ═══════════════════════════════════
+// CHECKLIST DEFINITIONS
+// cond: always|always_na|dama_only|diab_unstable|csection|transfer_ward|na_if_absent|picu_only|nicu_only|nursery_only
+// resp: phys|nurse|phys_nurse|fixed:X|custom(for consents)|sw|dt|anesthesia|or_nurse
+// verify: true = E·verify (orange tint)
+// key: true = mandatory (red left border)
+// ═══════════════════════════════════
+const BASE_CL={
+ICU:[
   // PHYSICIAN
-  { id: 'admission_req', name: 'Admission Request Form', section: 'physician', type: 'paper',
-    naCondition: (ctx) => false,
-    defaultResp: 'Physician' },
-  { id: 'discharge_sum', name: 'Discharge Summary', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-  { id: 'criteria_admit', name: 'Criteria for Admission to ICU', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'N/A' },
-  { id: 'icu_initial_assess', name: 'ICU Patient Initial Assessment', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-  { id: 'physician_care', name: 'Physician Care Plan', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-  { id: 'vte', name: 'VTE Form (Adult)', section: 'physician', type: 'electronic',
-    signNote: 'إذا كانت Draft فالنقص في Sign',
-    naCondition: (ctx) => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
-  { id: 'doctor_orders', name: "Doctor's Orders", section: 'physician', type: 'electronic',
-    signNote: 'إذا كان Draft فالنقص في Sign',
-    naCondition: (ctx) => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
-  { id: 'doctor_progress', name: "Doctor's Progress Notes", section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-  { id: 'transfer_summary', name: 'Transfer Summary (Dr)', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => ['transferred_hospital','dama','expired'].includes(ctx.discharge) || ctx.discharge === 'discharged',
-    naNote: 'N/A إلا في حالة تحويل لقسم داخلي',
-    defaultResp: 'Physician' },
-  { id: 'consultation', name: 'Consultation', section: 'physician', type: 'electronic',
-    signNote: 'إذا كانت نفس التخصص → Sign + Responsibility: N/A',
-    naCondition: (ctx) => false, defaultResp: 'N/A' },
-  { id: 'mrp_handover', name: 'Most Responsible Physician Hand Over', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-  { id: 'physician_shift', name: 'Physician Shift Hand Over', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-  { id: 'criteria_discharge', name: 'Criteria for Discharge from ICU', section: 'physician', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-
+  {id:'icu_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper form'},
+  {id:'icu_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Auto from Excel — always required'},
+  {id:'icu_ca',sec:'PHYSICIAN',name:'Criteria for Admission to ICU',type:'E',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required'},
+  {id:'icu_ia',sec:'PHYSICIAN',name:'ICU Patient Initial Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'icu_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory in all files'},
+  {id:'icu_vte',sec:'PHYSICIAN',name:'VTE Form (Adult)',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Verify in system — Draft=Sign / Missing=Doc'},
+  {id:'icu_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Verify in system — Draft=Sign / Missing=Doc'},
+  {id:'icu_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Verify every day of stay is covered'},
+  {id:'icu_ts',sec:'PHYSICIAN',name:'Transfer Summary (Dr)',type:'E',cond:'transfer_ward',resp:'phys',verify:true,key:false,hint:'Check system — required ONLY if transferred to ward during stay / otherwise N/A'},
+  {id:'icu_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New consult = Sign deficiency (N/A responsible) / Approved = ✓'},
+  {id:'icu_mrp',sec:'PHYSICIAN',name:'Most Responsible Physician Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in ICU'},
+  {id:'icu_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in ICU'},
+  {id:'icu_cd',sec:'PHYSICIAN',name:'Criteria for Discharge from ICU',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
   // MULTIDISCIPLINARY
-  { id: 'interdisciplinary', name: 'Interdisciplinary Plan of Care', section: 'multi', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician / Nurse (NR)' },
-  { id: 'patient_edu', name: 'Patient & Family Education Sheet', section: 'multi', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Physician / Nurse (NR)' },
-  { id: 'nutritional_screen', name: 'Nutritional Risk Screening + Assessment + Reassess', section: 'multi', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nutrition' },
-  { id: 'resp_therapy', name: 'Respiratory Therapy', section: 'multi', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Respiratory' },
-  { id: 'sw_care', name: 'Social Worker Care Plan + Progress Note + Assessment', section: 'multi', type: 'paper',
-    naCondition: (ctx) => false,
-    note: 'إلزامي في كل ملفات ICU',
-    defaultResp: 'SW + Physician' },
-  { id: 'sw_referral', name: 'Social Worker Referral', section: 'multi', type: 'paper',
-    naCondition: (ctx) => ctx.discharge !== 'dama',
-    naNote: 'مطلوب فقط مع DAMA',
-    defaultResp: 'SW' },
-  { id: 'medication_rec', name: 'Medication Reconciliation', section: 'multi', type: 'electronic',
-    signNote: 'إذا كان Draft فالنقص في Sign',
-    naCondition: (ctx) => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
-  { id: 'surgical_safety_nonor', name: 'Surgical Safety Checklist for non-OR', section: 'multi', type: 'paper',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-
+  {id:'icu_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'If Dr or Nurse section missing = Doc deficiency (NR)'},
+  {id:'icu_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'If Dr or Nurse section missing = Doc deficiency (NR)'},
+  {id:'icu_nut',sec:'MULTIDISCIPLINARY',name:'Nutritional (Risk Screening + Assessment + Reassess)',type:'E',cond:'always_na',resp:'fixed:DT',verify:true,key:false,hint:'N/A unless ordered by physician — if ordered and missing = Doc, DT responsible'},
+  {id:'icu_rt',sec:'MULTIDISCIPLINARY',name:'Respiratory Therapy',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in ICU'},
+  {id:'icu_sw',sec:'MULTIDISCIPLINARY',name:'Social Worker Care Plan + Progress Note + Assessment',type:'P',cond:'always',resp:'fixed:SW + Physician',key:true,hint:'MANDATORY in all ICU files — missing = SW + Physician responsible'},
+  {id:'icu_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA — missing = SW responsible'},
+  {id:'icu_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Verify in system — Draft=Sign / Missing=Doc'},
+  {id:'icu_ssc_nor',sec:'MULTIDISCIPLINARY',name:'Surgical Safety Checklist for non-OR',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in ICU'},
   // NURSE
-  { id: 'diabetic_chart', name: 'Diabetic Chart Record', section: 'nurse', type: 'paper',
-    naCondition: (ctx) => ctx.diabetic !== 'unstable',
-    naNote: 'مطلوب فقط إذا السكر مو مستقر',
-    defaultResp: 'Nurse' },
-  { id: 'pain_assessment', name: 'Pain Assessment Flow Sheet', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'initial_nursing', name: 'Initial Nursing Assessment (OPD-ER-ICU)', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'nursing_reassess', name: 'Nursing Reassessment Form (ICU/PICU)', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'nursing_care_plan', name: 'Nursing Care Plan', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'nurses_progress', name: "Nurses Progress Notes", section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'sbar', name: 'Nurses SBAR Endorsement', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'fall_risk', name: 'Fall Risk Assessment & Intervention (Adult)', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'injury_assess', name: 'Injury Assessment Form', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'braden', name: 'Braden Scale for Predicting Pressure Risk', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'discharge_checklist', name: 'Patient Orientation / Discharge Check List', section: 'nurse', type: 'electronic',
-    naCondition: (ctx) => false, defaultResp: 'Nurse' },
-  { id: 'consents', name: 'Consents', section: 'nurse', type: 'paper',
-    signNote: 'تحقق من الاسم والتوقيع',
-    naCondition: (ctx) => false, defaultResp: 'Physician' },
-];
-
-const SURGERY_ITEMS = [
-  // PHYSICIAN
-  { id: 'admission_sum', name: 'Admission Summary', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-  { id: 'discharge_sum', name: 'Discharge Summary', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-  { id: 'patient_initial', name: 'Patient Initial Assessment', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-  { id: 'physician_care', name: 'Physician Care Plan', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-  { id: 'vte', name: 'VTE Form (Adult/Antenatal/post-natal)', section: 'physician', type: 'electronic', signNote: 'إذا Draft → Sign', naCondition: () => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
-  { id: 'doctor_orders', name: "Doctor's Orders", section: 'physician', type: 'electronic', signNote: 'إذا Draft → Sign', naCondition: () => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
-  { id: 'doctor_progress', name: "Doctor's Progress Notes", section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-  { id: 'transfer_summary', name: 'Transfer Summary (Dr)', section: 'physician', type: 'electronic', naCondition: (ctx) => ['transferred_hospital','dama','expired','discharged'].includes(ctx.discharge), defaultResp: 'Physician' },
-  { id: 'consultation', name: 'Consultation', section: 'physician', type: 'electronic', signNote: 'نفس التخصص → Sign + N/A', naCondition: () => false, defaultResp: 'N/A' },
-  { id: 'mrp_handover', name: 'Most Responsible Physician Hand Over', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-  { id: 'physician_shift', name: 'Physician Shift Hand Over', section: 'physician', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-
-  // MULTI
-  { id: 'interdisciplinary', name: 'Interdisciplinary Plan of Care', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Physician / Nurse (NR)' },
-  { id: 'patient_edu', name: 'Patient & Family Education Sheet', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Physician / Nurse (NR)' },
-  { id: 'nutritional_screen', name: 'Nutritional Risk Screening', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Nutrition' },
-  { id: 'nutritional_care', name: 'Nutritional Care Process Assessment + Reassess', section: 'multi', type: 'electronic', naCondition: () => false, defaultResp: 'Nutrition' },
-  { id: 'sw_care', name: 'Social Worker Care Plan + Progress Note', section: 'multi', type: 'paper', naCondition: () => false, defaultResp: 'SW' },
-  { id: 'sw_assess', name: 'Social Worker Assessment', section: 'multi', type: 'paper', naCondition: () => false, defaultResp: 'SW' },
-  { id: 'medication_rec', name: 'Medication Reconciliation Form', section: 'multi', type: 'electronic', signNote: 'إذا Draft → Sign', naCondition: () => false, defaultResp: (ctx) => ctx.mainDoc || 'Physician' },
-
+  {id:'icu_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Verify in system — always required'},
+  {id:'icu_ni',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER-ICU)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_nr',sec:'NURSE',name:'Nursing Reassessment Form (ICU-PICU)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Verify in system — every day of stay must be covered'},
+  {id:'icu_sbar',sec:'NURSE',name:'Nurses SBAR Endorsement',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_fall',sec:'NURSE',name:'Fall Risk Assessment & Intervention (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_inj',sec:'NURSE',name:'Injury Assessment Form',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in ICU'},
+  {id:'icu_brd',sec:'NURSE',name:'Braden Scale for Predicting Pressure Risk',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'icu_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'diab_unstable',resp:'nurse',key:false,hint:'Paper — required ONLY if blood sugar is UNSTABLE'},
+  {id:'icu_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE on each form — multiple forms possible'},
+],
+Surgery:[
+  {id:'sg_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'sg_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Auto from Excel'},
+  {id:'sg_ia',sec:'PHYSICIAN',name:'Patient Initial Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'sg_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'sg_vte',sec:'PHYSICIAN',name:'VTE Form (Adult/Antenatal/post-natal)',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'sg_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'sg_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Required every day of stay'},
+  {id:'sg_ts',sec:'PHYSICIAN',name:'Transfer Summary (Dr)',type:'E',cond:'na_if_absent',resp:'phys',key:false,hint:'If present = ✓ / If not = N/A (not a deficiency in Surgery)'},
+  {id:'sg_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign deficiency (N/A) / Approved = ✓'},
+  {id:'sg_mrp',sec:'PHYSICIAN',name:'Most Responsible Physician Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'sg_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'sg_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'sg_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'sg_nut_scr',sec:'MULTIDISCIPLINARY',name:'Nutritional Risk Screening',type:'E',cond:'always_na',resp:'fixed:DT',key:false,hint:'N/A unless ordered — if missing = DT'},
+  {id:'sg_nut_ass',sec:'MULTIDISCIPLINARY',name:'Nutritional Care Process Assessment + Reassess',type:'E',cond:'always_na',resp:'fixed:DT',key:false,hint:'N/A unless ordered — if missing = DT'},
+  {id:'sg_sw',sec:'MULTIDISCIPLINARY',name:'Social Worker Care Plan + Progress Note',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Surgery'},
+  {id:'sg_swa',sec:'MULTIDISCIPLINARY',name:'Social Worker Assessment',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Surgery'},
+  {id:'sg_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA'},
+  {id:'sg_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation Form',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
   // OPERATION RECORD
-  { id: 'op_record', name: 'Operation Record', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Surgeon' },
-  { id: 'pre_op_anesthesia', name: 'Pre-Operative Anesthesia Evaluation', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Anesthesia' },
-  { id: 'anesthesia_record', name: 'Anesthesia Record', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'Anesthesia' },
-  { id: 'pacu_dept', name: 'Anesthesia Department PACU Record', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'Anesthesia' },
-  { id: 'pacu_nursing', name: 'PACU Record - Nursing (ADULT-Pediatric)', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'pre_post_checklist', name: 'Pre/Post Operative Checklist Form', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'intra_op', name: 'Intra Operative Record', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'OR Nurse' },
-  { id: 'instruments', name: 'Instruments & Sponges Count', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'OR Nurse' },
-  { id: 'surgical_safety', name: 'Surgical Safety Checklist', section: 'operation', type: 'paper', naCondition: () => false, defaultResp: 'Surgeon' },
-  { id: 'post_op_care', name: 'Post Operative Care Plan', section: 'operation', type: 'electronic', naCondition: () => false, defaultResp: 'Physician' },
-
+  {id:'sg_or',sec:'OPERATION RECORD',name:'Operation Record',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'sg_pae',sec:'OPERATION RECORD',name:'Pre-Operative Anesthesia Evaluation',type:'E',cond:'always',resp:'fixed:Anesthesia',key:false,hint:'Always required'},
+  {id:'sg_anr',sec:'OPERATION RECORD',name:'Anesthesia Record',type:'P',cond:'always',resp:'fixed:Anesthesia',key:false,hint:'Paper — Missing=Doc / Draft=Sign'},
+  {id:'sg_pacu_d',sec:'OPERATION RECORD',name:'Anesthesia Department PACU Record',type:'P',cond:'always',resp:'fixed:Anesthesia',key:false,hint:'Paper — Missing=Doc / Draft=Sign'},
+  {id:'sg_pacu_n',sec:'OPERATION RECORD',name:'PACU Record - Nursing (ADULT-Pediatric)',type:'E',cond:'always',resp:'nurse',key:false,hint:'Always required'},
+  {id:'sg_ppc',sec:'OPERATION RECORD',name:'Pre/Post Operative Checklist Form',type:'E',cond:'always',resp:'nurse',key:false,hint:'Always required'},
+  {id:'sg_ior',sec:'OPERATION RECORD',name:'Intra Operative Record',type:'P',cond:'always',resp:'fixed:OR Nurse',key:false,hint:'Paper — always required'},
+  {id:'sg_isc',sec:'OPERATION RECORD',name:'Instruments & Sponges Count',type:'P',cond:'always',resp:'fixed:OR Nurse',key:false,hint:'Paper — always required'},
+  {id:'sg_ssc',sec:'OPERATION RECORD',name:'Surgical Safety Checklist',type:'P',cond:'always',resp:'phys',key:false,hint:'Paper — always required'},
+  {id:'sg_poc',sec:'OPERATION RECORD',name:'Post Operative Care Plan',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
   // NURSE
-  { id: 'diabetic_chart', name: 'Diabetic Chart Record', section: 'nurse', type: 'paper', naCondition: (ctx) => ctx.diabetic !== 'unstable', naNote: 'مطلوب فقط إذا السكر مو مستقر', defaultResp: 'Nurse' },
-  { id: 'pain_assessment', name: 'Pain Assessment Flow Sheet', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'initial_nursing', name: 'Initial Nursing Assessment (OPD-ER)', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'nursing_reassess', name: 'Nursing Reassessment Form', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'nursing_care_plan', name: 'Nursing Care Plan', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'nurses_progress', name: "Nurses Progress Notes", section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'braden', name: 'Braden Scale for Predicting Pressure Risk', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'fall_risk', name: 'Fall Risk Assessment & Intervention (Adult)', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'discharge_checklist', name: 'Patient Orientation / Discharge Check List', section: 'nurse', type: 'electronic', naCondition: () => false, defaultResp: 'Nurse' },
-  { id: 'consents', name: 'Consents', section: 'nurse', type: 'paper', signNote: 'تحقق من الاسم والتوقيع', naCondition: () => false, defaultResp: 'Physician' },
-];
-
-const ITEMS_MAP = {
-  icu: ICU_ITEMS,
-  surgery: SURGERY_ITEMS,
-  internal: ICU_ITEMS, // placeholder
-  pediatric: ICU_ITEMS,
-  obstetric: ICU_ITEMS,
+  {id:'sg_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Surgery'},
+  {id:'sg_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_ni',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_nre',sec:'NURSE',name:'Nursing Reassessment Form',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day of stay'},
+  {id:'sg_brd',sec:'NURSE',name:'Braden Scale for Predicting Pressure Risk',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_fall',sec:'NURSE',name:'Fall Risk Assessment & Intervention (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'sg_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE — multiple forms possible'},
+],
+OBGYNE:[
+  {id:'ob_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'ob_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'ob_drac',sec:'PHYSICIAN',name:'Delivery Room Admission Criteria',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'ob_drdc',sec:'PHYSICIAN',name:'Delivery Room Discharge Criteria',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'ob_ia',sec:'PHYSICIAN',name:'Patient Initial Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'ob_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'ob_vte',sec:'PHYSICIAN',name:'VTE Form (Adult/Antenatal/post-natal)',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'ob_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'ob_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Every day of stay'},
+  {id:'ob_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign deficiency / Approved = ✓'},
+  {id:'ob_mrp',sec:'PHYSICIAN',name:'Most Responsible Physician Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'ob_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'ob_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'ob_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'ob_nut_scr',sec:'MULTIDISCIPLINARY',name:'Nutritional Risk Screening',type:'E',cond:'na_if_absent',resp:'fixed:DT',key:false,hint:'If present = ✓ / If not = N/A — if ordered and missing = DT'},
+  {id:'ob_nut_ass',sec:'MULTIDISCIPLINARY',name:'Nutritional Care Process Assessment + Reassess',type:'E',cond:'na_if_absent',resp:'fixed:DT',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'ob_sw',sec:'MULTIDISCIPLINARY',name:'Social Worker Care Plan + Progress Note',type:'P',cond:'na_if_absent',resp:'fixed:SW',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'ob_swa',sec:'MULTIDISCIPLINARY',name:'Social Worker Assessment',type:'P',cond:'na_if_absent',resp:'fixed:SW',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'ob_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation Form',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'ob_bfi',sec:'MULTIDISCIPLINARY',name:'Breast Feeding Care Instructions',type:'P',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'ob_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA'},
+  // OPERATION RECORD
+  {id:'ob_eif',sec:'OPERATION RECORD',name:'Record For Epidural Insertion Form',type:'P',cond:'csection',resp:'fixed:Anesthesia',key:false,hint:'C-Section only'},
+  {id:'ob_eam',sec:'OPERATION RECORD',name:'Epidural Analgesia Monitoring',type:'P',cond:'csection',resp:'fixed:Anesthesia',key:false,hint:'C-Section only'},
+  {id:'ob_or',sec:'OPERATION RECORD',name:'Operation Record',type:'E',cond:'csection',resp:'phys',key:false,hint:'C-Section only'},
+  {id:'ob_pae',sec:'OPERATION RECORD',name:'Pre-Operative Anesthesia Evaluation',type:'E',cond:'csection',resp:'fixed:Anesthesia',key:false,hint:'C-Section only'},
+  {id:'ob_anr',sec:'OPERATION RECORD',name:'Anesthesia Record',type:'P',cond:'csection',resp:'fixed:Anesthesia',key:false,hint:'C-Section — Missing=Doc / Draft=Sign'},
+  {id:'ob_pacu_d',sec:'OPERATION RECORD',name:'Anesthesia Department PACU',type:'P',cond:'csection',resp:'fixed:Anesthesia',key:false,hint:'C-Section only'},
+  {id:'ob_pacu_n',sec:'OPERATION RECORD',name:'PACU Nursing (adult & pedia)',type:'E',cond:'csection',resp:'nurse',key:false,hint:'C-Section only'},
+  {id:'ob_ppc',sec:'OPERATION RECORD',name:'Pre/Post Operative Checklist Form',type:'E',cond:'csection',resp:'nurse',key:false,hint:'C-Section only'},
+  {id:'ob_ior',sec:'OPERATION RECORD',name:'Intra Operative Record',type:'P',cond:'csection',resp:'fixed:OR Nurse',key:false,hint:'C-Section only'},
+  {id:'ob_isc',sec:'OPERATION RECORD',name:'Instruments & Sponges Count',type:'P',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'ob_ssc',sec:'OPERATION RECORD',name:'Surgical Safety Checklist',type:'P',cond:'csection',resp:'phys',key:false,hint:'C-Section only'},
+  {id:'ob_poc',sec:'OPERATION RECORD',name:'Post Operative Care Plan',type:'E',cond:'csection',resp:'phys',key:false,hint:'C-Section only'},
+  {id:'ob_dr',sec:'OPERATION RECORD',name:'Delivery Record',type:'P',cond:'always',resp:'phys',key:true,hint:'Always required — both normal and C-Section'},
+  {id:'ob_par',sec:'OPERATION RECORD',name:'Maternity Record (Partogram)',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required'},
+  // NURSE
+  {id:'ob_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'ob_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_ni',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_nre',sec:'NURSE',name:'Nursing Reassessment Form (Ob-Gyne)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
+  {id:'ob_sbar',sec:'NURSE',name:'Nurses SBAR Endorsement',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_brd',sec:'NURSE',name:'Braden Scale for Predicting Pressure Risk',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_fall',sec:'NURSE',name:'Fall Risk Assessment & Intervention (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ob_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE — multiple forms possible'},
+],
+Pediatric:[
+  {id:'pd_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'pd_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'pd_picu_ac',sec:'PHYSICIAN',name:'PICU Admission Criteria',type:'E',cond:'always',resp:'phys',key:false,hint:'Required for PICU patients'},
+  {id:'pd_ia',sec:'PHYSICIAN',name:'Pediatric Department Patient Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'pd_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'pd_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'pd_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Every day of stay'},
+  {id:'pd_ti',sec:'PHYSICIAN',name:'Transfer In (Dr)',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Pediatrics'},
+  {id:'pd_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign deficiency / Approved = ✓'},
+  {id:'pd_mrp',sec:'PHYSICIAN',name:'Most Responsible Physician Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'pd_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'pd_picu_dc',sec:'PHYSICIAN',name:'PICU Discharge Criteria',type:'E',cond:'always',resp:'phys',key:false,hint:'Required for PICU patients'},
+  {id:'pd_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'pd_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Record',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'pd_nut',sec:'MULTIDISCIPLINARY',name:'Nutritional (Risk Screening + Assessment + Reassess)',type:'E',cond:'always_na',resp:'fixed:DT',key:false,hint:'N/A unless ordered — if missing = DT'},
+  {id:'pd_sw',sec:'MULTIDISCIPLINARY',name:'Social Worker Care Plan + Progress Note + Assessment',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Pediatrics'},
+  {id:'pd_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA'},
+  {id:'pd_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  // NURSE
+  {id:'pd_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'pd_pain',sec:'NURSE',name:'Pain Assessment & Reassessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_ni',sec:'NURSE',name:'Pediatric Nursing Initial Assessment Form (ER/OPD)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_fall_f',sec:'NURSE',name:'Fall Risk Assessment Form',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_nre',sec:'NURSE',name:'Nursing Reassessment Form',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
+  {id:'pd_sbar',sec:'NURSE',name:'Nurses SBAR Endorsement',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_fall_m',sec:'NURSE',name:'Fall Risk Assessment Monitoring Form (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'pd_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
+],
+IM:[
+  {id:'im_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'im_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'im_ia',sec:'PHYSICIAN',name:'Patient Initial Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'im_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'im_vte',sec:'PHYSICIAN',name:'VTE Form (Adult)',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'im_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'im_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Every day of stay'},
+  {id:'im_ts',sec:'PHYSICIAN',name:'Transfer Summary (Dr)',type:'E',cond:'na_if_absent',resp:'phys',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'im_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign / Approved = ✓'},
+  {id:'im_mrp',sec:'PHYSICIAN',name:'Most Responsible Physician Hand Over',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'im_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Verify in system'},
+  {id:'im_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'im_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'im_nut',sec:'MULTIDISCIPLINARY',name:'Nutritional (Risk Screening + Assessment + Reassess)',type:'E',cond:'always_na',resp:'fixed:DT',key:false,hint:'N/A unless ordered'},
+  {id:'im_rt',sec:'MULTIDISCIPLINARY',name:'Respiratory Therapy',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'N/A unless ordered'},
+  {id:'im_sw',sec:'MULTIDISCIPLINARY',name:'Social Worker Care Plan + Progress Note + Assessment',type:'P',cond:'always_na',resp:'fixed:SW',key:false,hint:'N/A unless ordered'},
+  {id:'im_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA'},
+  {id:'im_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'im_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'diab_unstable',resp:'nurse',key:false,hint:'Required ONLY if blood sugar is UNSTABLE'},
+  {id:'im_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_ni',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_nre',sec:'NURSE',name:'Nursing Reassessment Form',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day of stay'},
+  {id:'im_sbar',sec:'NURSE',name:'Nurses SBAR Endorsement',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_fall',sec:'NURSE',name:'Fall Risk Assessment & Intervention (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_brd',sec:'NURSE',name:'Braden Scale Risk for Pressure Ulcer',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_inj',sec:'NURSE',name:'Injury Assessment Form',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'im_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
+],
+NICU:[
+  {id:'nicu_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'nicu_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'nicu_ca',sec:'PHYSICIAN',name:'Criteria for Admission to (NICU)',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'nicu_ia',sec:'PHYSICIAN',name:'NICU Physician Initial Admission Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'nicu_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'nicu_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'nicu_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Every day'},
+  {id:'nicu_nr',sec:'PHYSICIAN',name:'Newborn Record',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  {id:'nicu_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign / Approved = ✓'},
+  {id:'nicu_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'nicu_cd',sec:'PHYSICIAN',name:'Criteria for Discharge from (NICU)',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'nicu_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'nicu_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'nicu_neo_rec',sec:'MULTIDISCIPLINARY',name:'Neonatal Record + Baby\'s Footprint',type:'P',cond:'always',resp:'nurse',key:true,hint:'Always required — mandatory'},
+  {id:'nicu_milk',sec:'MULTIDISCIPLINARY',name:'Authorizing Consent to Give Artificial Baby Milk/Formula',type:'P',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'nicu_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
+  {id:'nicu_ssc',sec:'MULTIDISCIPLINARY',name:'Surgical Safety Checklist for non-OR',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
+  {id:'nicu_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA'},
+  {id:'nicu_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
+  {id:'nicu_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'nicu_hear',sec:'NURSE',name:'Hearing Screening Test Report',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nicu_baby_feed',sec:'NURSE',name:'Baby Feed Chart',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
+  {id:'nicu_rooming',sec:'NURSE',name:'Baby Rooming in Form',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
+  {id:'nicu_neo_nurse',sec:'NURSE',name:'Neonate Nursing Admission & Assessment',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nicu_ni_opd',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
+  {id:'nicu_ni_nicu',sec:'NURSE',name:'Initial Nursing Assessment (NICU-Nursery)',type:'E',cond:'always',resp:'fixed:N/A',key:false,hint:'If missing = Doc deficiency, responsible: N/A'},
+  {id:'nicu_nre',sec:'NURSE',name:'Nursing Reassessment',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'nicu_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'nicu_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
+  {id:'nicu_ndc',sec:'NURSE',name:'Nursery Unit — Discharge Checklist Form',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nicu_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nicu_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
+],
+Nursery:[
+  {id:'nur_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'nur_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'nur_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'nur_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'nur_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Every day'},
+  {id:'nur_nr',sec:'PHYSICIAN',name:'Newborn Record',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  {id:'nur_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign / Approved = ✓'},
+  {id:'nur_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'nur_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'nur_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
+  {id:'nur_neo_rec',sec:'MULTIDISCIPLINARY',name:'Neonatal Record + Baby\'s Footprint',type:'P',cond:'always',resp:'nurse',key:true,hint:'Always required — mandatory'},
+  {id:'nur_milk',sec:'MULTIDISCIPLINARY',name:'Authorizing Consent to Give Artificial Baby Milk/Formula',type:'P',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
+  {id:'nur_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Nursery'},
+  {id:'nur_ssc',sec:'MULTIDISCIPLINARY',name:'Surgical Safety Checklist for non-OR',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Nursery'},
+  {id:'nur_swr',sec:'MULTIDISCIPLINARY',name:'Social Worker Referral',type:'P',cond:'dama_only',resp:'fixed:SW',key:false,hint:'Required ONLY with DAMA'},
+  {id:'nur_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'nur_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'nur_hear',sec:'NURSE',name:'Hearing Screening Test Report',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nur_baby_feed',sec:'NURSE',name:'Baby Feed Chart',type:'P',cond:'always',resp:'nurse',key:true,hint:'Always required in Nursery — paper'},
+  {id:'nur_rooming',sec:'NURSE',name:'Baby Rooming in Form',type:'P',cond:'always',resp:'nurse',key:true,hint:'Always required in Nursery — paper'},
+  {id:'nur_neo_nurse',sec:'NURSE',name:'Neonate Nursing Admission & Assessment',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nur_ni_opd',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Nursery'},
+  {id:'nur_ni_nicu',sec:'NURSE',name:'Initial Nursing Assessment (NICU-Nursery)',type:'E',cond:'always',resp:'fixed:N/A',key:false,hint:'If missing = Doc, responsible: N/A'},
+  {id:'nur_nre',sec:'NURSE',name:'Nursing Reassessment',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'nur_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'nur_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
+  {id:'nur_ndc',sec:'NURSE',name:'Nursery Unit — Discharge Checklist Form',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nur_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nur_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
+],
+Endoscopy:[
+  {id:'en_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'en_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'en_ia',sec:'PHYSICIAN',name:'Patient Initial Assessment',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'en_cp',sec:'PHYSICIAN',name:'Physician Care Plan',type:'E',cond:'always',resp:'phys',key:true,hint:'Mandatory'},
+  {id:'en_vte',sec:'PHYSICIAN',name:'VTE Form (Adult)',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'en_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'en_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:true,hint:'Every day'},
+  {id:'en_con',sec:'PHYSICIAN',name:'Consultation',type:'E',cond:'always',resp:'fixed:N/A',verify:true,key:false,hint:'New = Sign / Approved = ✓'},
+  {id:'en_git',sec:'PHYSICIAN',name:'GIT Endoscopy Unit Report Form',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'en_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Verify in system'},
+  // ENDOSCOPY FORMS
+  {id:'en_pae',sec:'ENDOSCOPY FORMS',name:'Pre-Operative Anesthesia Evaluation',type:'E',cond:'always',resp:'fixed:Anesthesia',key:false,hint:'Always required'},
+  {id:'en_anr',sec:'ENDOSCOPY FORMS',name:'Anesthesia Record',type:'P',cond:'always',resp:'fixed:Anesthesia',key:false,hint:'Paper — Missing=Doc / Draft=Sign'},
+  {id:'en_pacu_d',sec:'ENDOSCOPY FORMS',name:'Anesthesia Department PACU Record',type:'P',cond:'always',resp:'fixed:Anesthesia',key:false,hint:'Paper'},
+  {id:'en_pacu_n',sec:'ENDOSCOPY FORMS',name:'PACU Record - Nursing (ADULT-Pediatric)',type:'E',cond:'always',resp:'nurse',key:false,hint:'Always required'},
+  {id:'en_ppc',sec:'ENDOSCOPY FORMS',name:'Pre/Post Operative Checklist Form',type:'E',cond:'always',resp:'nurse',key:false,hint:'Always required'},
+  {id:'en_ssc',sec:'ENDOSCOPY FORMS',name:'Surgical Safety Checklist',type:'P',cond:'always',resp:'phys',key:false,hint:'Paper — always required'},
+  {id:'en_poc',sec:'ENDOSCOPY FORMS',name:'Post Operative Care Plan',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  // NURSE
+  {id:'en_dc_chart',sec:'NURSE',name:'Diabetic Chart Record',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A'},
+  {id:'en_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_ni',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_nre',sec:'NURSE',name:'Nursing Reassessment Form',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
+  {id:'en_sbar',sec:'NURSE',name:'Nurses SBAR Endorsement',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_fall',sec:'NURSE',name:'Fall Risk Assessment & Intervention (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_brd',sec:'NURSE',name:'Braden Scale Risk for Pressure Ulcer',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'en_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
+],
+ESWL:[
+  {id:'ew_ar',sec:'PHYSICIAN',name:'Admission Request Form',type:'P',cond:'always',resp:'fixed:N/A',key:false,hint:'Always required — paper'},
+  {id:'ew_ds',sec:'PHYSICIAN',name:'Discharge Summary',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
+  {id:'ew_ord',sec:'PHYSICIAN',name:"Doctor's Orders",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  {id:'ew_pn',sec:'PHYSICIAN',name:"Doctor's Progress Notes",type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Every day'},
+  {id:'ew_med',sec:'PHYSICIAN',name:'Medication Sheet',type:'E',cond:'always',resp:'phys',verify:true,key:false,hint:'Draft=Sign / Missing=Doc'},
+  // ESWL FORMS
+  {id:'ew_sed',sec:'ESWL FORMS',name:'Assessment of Procedure Sedation / Analgesia',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  {id:'ew_ssc',sec:'ESWL FORMS',name:'Surgical Safety Checklist non-OR',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  {id:'ew_csd',sec:'ESWL FORMS',name:'Conscious Sedation Documentation Record',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  {id:'ew_post',sec:'ESWL FORMS',name:'Post Procedural Sedation/Analgesia Patient Instructions',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  {id:'ew_note',sec:'ESWL FORMS',name:'ESWL Operative Note',type:'P',cond:'always',resp:'phys',key:false,hint:'Always required — paper'},
+  // NURSE
+  {id:'ew_pain',sec:'NURSE',name:'Pain Assessment Flow Sheet',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ew_ni',sec:'NURSE',name:'Initial Nursing Assessment (OPD-ER)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ew_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Every day'},
+  {id:'ew_fall',sec:'NURSE',name:'Fall Risk Assessment & Intervention (Adult)',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ew_dcl',sec:'NURSE',name:'Patient Orientation / Discharge Check List',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
+  {id:'ew_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
+]
 };
-
-const SECTION_LABELS = {
-  physician: { label: 'PHYSICIAN', cls: 'section-physician', icon: '👨‍⚕️' },
-  multi: { label: 'MULTIDISCIPLINARY TEAM', cls: 'section-multi', icon: '👥' },
-  operation: { label: 'OPERATION RECORD', cls: 'section-op', icon: '🔬' },
-  nurse: { label: 'NURSE', cls: 'section-nurse', icon: '👩‍⚕️' },
-};
-
-const FILE_TYPE_LABELS = { icu:'عناية مركزة (ICU)', surgery:'عمليات (Surgery)', internal:'داخلية', pediatric:'أطفال', obstetric:'ولادة' };
-const DISCHARGE_LABELS = { discharged:'خروج عادي', transferred_ward:'تحويل لقسم', transferred_hospital:'تحويل لمستشفى', dama:'DAMA', expired:'وفاة' };
-
-// ===== STATE =====
-let state = {};
-let itemStates = {};
-let ctx = {};
-// Staff registry: { doctors: [{id, name}], nurses: [{id, name}] }
-let staffRegistry = JSON.parse(localStorage.getItem('staffRegistry') || '{"doctors":[],"nurses":[]}');
-
-function saveStaff() {
-  try { localStorage.setItem('staffRegistry', JSON.stringify(staffRegistry)); } catch(e) {}
-}
-
-function addStaff(type, name) {
-  const list = staffRegistry[type];
-  const clean = name.trim();
-  if (!clean) return false;
-  if (list.find(s => s.name.toLowerCase() === clean.toLowerCase())) return false; // no duplicates
-  list.push({ id: Date.now().toString(), name: clean });
-  saveStaff();
-  return true;
-}
-
-function removeStaff(type, id) {
-  staffRegistry[type] = staffRegistry[type].filter(s => s.id !== id);
-  saveStaff();
-  renderStaffModal();
-}
-
-// ===== STAFF MODAL =====
-function openStaffModal() {
-  document.getElementById('staffModal').classList.remove('hidden');
-  renderStaffModal();
-}
-function closeStaffModal() {
-  document.getElementById('staffModal').classList.add('hidden');
-}
-
-function renderStaffModal() {
-  ['doctors','nurses'].forEach(type => {
-    const list = staffRegistry[type];
-    const el = document.getElementById(`${type}List`);
-    el.innerHTML = list.length === 0
-      ? `<div style="color:var(--text2);font-size:12px;padding:4px 0">لا يوجد أسماء بعد</div>`
-      : list.map(s => `
-          <div class="staff-tag">
-            <span>${s.name}</span>
-            <button onclick="removeStaff('${type}','${s.id}');renderChecklist()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px">×</button>
-          </div>`).join('');
+ 
+// Merge with user edits
+function getCL(type){
+  const base=BASE_CL[type]||[];
+  const edits=clEdits[type]||{};
+  return base.map(item=>{
+    if(edits[item.id])return Object.assign({},item,edits[item.id]);
+    return item;
   });
 }
-
-function submitStaff(type) {
-  const input = document.getElementById(`${type}Input`);
-  const name = input.value.trim();
-  if (!name) return;
-  const added = addStaff(type, name);
-  if (!added) {
-    input.style.borderColor = 'var(--red)';
-    setTimeout(() => input.style.borderColor = '', 1200);
-  } else {
-    input.value = '';
-    renderStaffModal();
-    renderChecklist();
+ 
+// ═══════════════════════════════════
+// CONDITION LOGIC
+// ═══════════════════════════════════
+function isNA(item,c){
+  switch(item.cond){
+    case 'always_na':return true;
+    case 'dama_only':return c.dc!=='dama';
+    case 'diab_unstable':return c.diab!=='unstable';
+    case 'csection':return c.deliv!=='csection';
+    case 'transfer_ward':return c.transfer!=='yes';
+    case 'na_if_absent':return false;// user decides; default N/A set in init
+    default:return false;
   }
 }
-
-// ===== FORM VALIDATION =====
-['fileNum','fileType','dischargeType'].forEach(id => {
-  document.getElementById(id).addEventListener('input', validateForm);
-  document.getElementById(id).addEventListener('change', validateForm);
-});
-
-function validateForm() {
-  const ok = document.getElementById('fileNum').value.trim() &&
-             document.getElementById('fileType').value &&
-             document.getElementById('dischargeType').value;
-  document.getElementById('startBtn').disabled = !ok;
+ 
+// ═══════════════════════════════════
+// RESPONSIBLE RESOLVER
+// ═══════════════════════════════════
+function getFixedResp(item,c){
+  if(item.resp.startsWith('fixed:'))return item.resp.replace('fixed:','');
+  if(item.resp==='phys_nurse')return (c.doc||'Physician')+' / Nurse (NR)';
+  if(item.resp==='phys')return c.doc||'Physician';
+  return null;// nurse or custom = not fixed
 }
-
-// ===== START ANALYSIS =====
-function startAnalysis() {
-  ctx = {
-    fileNum: document.getElementById('fileNum').value.trim(),
-    fileType: document.getElementById('fileType').value,
-    discharge: document.getElementById('dischargeType').value,
-    diabetic: document.getElementById('diabeticStatus').value,
-    mainDoc: document.getElementById('mainDoc').value.trim(),
-    date: document.getElementById('dischargeDate').value,
-    analyst: document.getElementById('analystName').value.trim(),
-  };
-
-  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
-  itemStates = {};
-  items.forEach(item => {
-    const isNA = item.naCondition(ctx);
-    itemStates[item.id] = { status: isNA ? 'na' : null, resp: '' };
+function isFixedResp(item){
+  return item.resp==='fixed:N/A'||item.resp==='fixed:SW'||item.resp==='fixed:DT'||
+    item.resp==='fixed:Anesthesia'||item.resp==='fixed:OR Nurse'||
+    item.resp==='fixed:SW + Physician'||item.resp==='phys_nurse'||item.resp==='phys';
+}
+ 
+// ═══════════════════════════════════
+// LANG & THEME
+// ═══════════════════════════════════
+function t(k){return TR[lang][k]||TR.en[k]||k}
+function applyLang(){
+  document.body.classList.toggle('ar',lang==='ar');
+  document.body.dir=lang==='ar'?'rtl':'ltr';
+  document.querySelectorAll('.tr[data-k]').forEach(el=>{
+    const k=el.getAttribute('data-k');const v=t(k);
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA')el.placeholder=v;
+    else el.textContent=v;
   });
-
-  renderFileInfoBar('fileInfoBar');
-  renderChecklist();
-
-  document.getElementById('step1').classList.add('hidden');
-  document.getElementById('step2').classList.remove('hidden');
-  document.getElementById('s1').classList.remove('active');
-  document.getElementById('s1').classList.add('done');
-  document.getElementById('s2').classList.add('active');
-
-  updateProgress();
 }
-
-// ===== RENDER CHECKLIST =====
-function renderChecklist() {
-  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
-  const container = document.getElementById('checklistContainer');
-  container.innerHTML = '';
-
-  let currentSection = null;
-
-  items.forEach(item => {
-    const s = itemStates[item.id];
-    const isNA = s.status === 'na';
-
-    if (item.section !== currentSection) {
-      currentSection = item.section;
-      const sec = SECTION_LABELS[currentSection] || { label: currentSection, cls: 'section-physician', icon: '📋' };
-      container.innerHTML += `<div class="section-header ${sec.cls}">${sec.icon} ${sec.label}</div>`;
+function toggleLang(){lang=lang==='en'?'ar':'en';localStorage.setItem('lang',lang);applyLang()}
+function toggleTheme(){
+  theme=theme==='light'?'dark':'light';
+  localStorage.setItem('theme',theme);
+  document.documentElement.setAttribute('data-theme',theme==='dark'?'dark':'');
+  const ic=document.getElementById('theme-ic');
+  if(theme==='dark')ic.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  else ic.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+ 
+// ═══════════════════════════════════
+// NAV
+// ═══════════════════════════════════
+function nav(p){
+  document.querySelectorAll('.pg').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('pg-'+p).classList.add('active');
+  document.getElementById('nav-'+p)?.classList.add('active');
+  window.scrollTo(0,0);
+}
+ 
+// ═══════════════════════════════════
+// EXCEL
+// ═══════════════════════════════════
+function handleDrop(e){const f=e.dataTransfer.files[0];if(f)processXL(f)}
+function handleXL(inp){if(inp.files[0])processXL(inp.files[0])}
+function processXL(file){
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+      patients=data.map(row=>{
+        const mrn=String(row.MRN||row.FILE_NO||row['File Number']||'').trim();
+        const dept=String(row.PAT_LOCATION||row.DEPARTMENT||row.Department||'').trim();
+        let dc=row.DISCHRAGE_DATE||row.DISCHARGE_DATE||row['Discharge Date']||'';
+        if(typeof dc==='number'){const d=new Date((dc-25569)*86400*1000);dc=d.toISOString().split('T')[0];}
+        return{mrn,dept,dc,raw:row,done:false};
+      }).filter(p=>p.mrn);
+      renderPtList();
+      document.getElementById('ptl-wrap').classList.remove('hidden');
+      toast(`Loaded ${patients.length} patients`,'info');
+    }catch(err){toast(err.message,'err')}
+  };
+  r.readAsBinaryString(file);
+}
+function renderPtList(){
+  document.getElementById('pt-cnt').textContent=`${patients.length} patients`;
+  document.getElementById('pt-rows').innerHTML=patients.map((p,i)=>`
+    <div class="pt-row${p.done?' done':''}" onclick="selPt(${i})">
+      <span class="pt-fn">${p.mrn}</span>
+      <span style="color:var(--t3);font-size:12px">${p.dc||'—'}</span>
+      <span style="color:var(--t2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.dept||'—'}</span>
+      <span class="badge ${p.done?'b-done':'b-pend'}">${p.done?'Done':'Pending'}</span>
+    </div>`).join('');
+}
+function selPt(i){
+  const p=patients[i];
+  document.getElementById('f-num').value=p.mrn;
+  if(p.dc)document.getElementById('f-date').value=p.dc;
+  autoType(p.dept);
+  valSetup();nav('analysis');
+  toast(`File ${p.mrn} selected`,'info');
+}
+function autoType(dept){
+  const d=(dept||'').toLowerCase();
+  let v='';
+  if(d.includes('nicu')||d.includes('neonatal intensive'))v='NICU';
+  else if(d.includes('nursery'))v='Nursery';
+  else if(d.includes('icu')||d.includes('intensive'))v='ICU';
+  else if(d.includes('obstet')||d.includes('gyne')||d.includes('maternity'))v='OBGYNE';
+  else if(d.includes('pediatric')||d.includes('paediatric'))v='Pediatric';
+  else if(d.includes('endoscopy'))v='Endoscopy';
+  else if(d.includes('eswl'))v='ESWL';
+  else if(d.includes('internal')||d.includes('medicine'))v='IM';
+  else if(d.includes('surg')||d.includes('ortho')||d.includes('neuro')||d.includes('vascular')||d.includes('plastic'))v='Surgery';
+  if(v){document.getElementById('f-type').value=v;onTypeChange();}
+}
+function selManual(){
+  const fn=document.getElementById('manual-fn').value.trim();
+  if(!fn){toast('Enter a file number','warn');return;}
+  const found=patients.find(p=>p.mrn===fn);
+  if(!found&&patients.length>0)toast('Not in Excel — manual mode','warn');
+  document.getElementById('f-num').value=fn;
+  if(found?.dc)document.getElementById('f-date').value=found.dc;
+  nav('analysis');valSetup();
+}
+ 
+// ═══════════════════════════════════
+// SETUP
+// ═══════════════════════════════════
+function onTypeChange(){
+  const tp=document.getElementById('f-type').value;
+  document.getElementById('f-diab-w').classList.toggle('hidden',!['ICU','IM'].includes(tp));
+  document.getElementById('f-deliv-w').classList.toggle('hidden',tp!=='OBGYNE');
+  document.getElementById('f-trans-w').classList.toggle('hidden',tp!=='ICU');
+  const sel=document.getElementById('f-spec');
+  sel.innerHTML='<option value="">-- Select --</option>';
+  specs.filter(s=>!tp||s.type===tp).forEach(s=>{
+    const o=document.createElement('option');o.value=s.name;o.textContent=s.name;sel.appendChild(o);
+  });
+  valSetup();
+}
+function valSetup(){
+  const ok=document.getElementById('f-num').value.trim()&&document.getElementById('f-type').value;
+  document.getElementById('start-btn').disabled=!ok;
+}
+['f-num','f-type'].forEach(id=>document.getElementById(id)?.addEventListener('input',valSetup));
+ 
+function startAnalysis(){
+  const tp=document.getElementById('f-type').value;
+  if(!tp)return;
+  ctx={
+    fn:document.getElementById('f-num').value.trim(),
+    type:tp,spec:document.getElementById('f-spec').value,
+    dc:document.getElementById('f-dc').value,
+    date:document.getElementById('f-date').value,
+    doc:document.getElementById('f-doc').value.trim(),
+    diab:document.getElementById('f-diab').value,
+    deliv:document.getElementById('f-deliv').value,
+    transfer:document.getElementById('f-trans').value,
+    analyst:document.getElementById('f-analyst').value.trim(),
+  };
+  states={};
+  const items=getCL(tp);
+  items.forEach(item=>{
+    const na=isNA(item,ctx);
+    const defNA=na||(item.cond==='na_if_absent');
+    states[item.id]={status:defNA?'na':null,resp:'',notes:'',fromXL:false,consents:[]};
+  });
+  // Prefill from Excel
+  const pt=patients.find(p=>p.mrn===ctx.fn);
+  if(pt)prefillXL(pt,items);
+  // Sidebar
+  document.getElementById('sb-fn').textContent=ctx.fn;
+  document.getElementById('sb-type').textContent=ctx.type;
+  document.getElementById('sb-dc').textContent=ctx.dc;
+  document.getElementById('sb-file').classList.remove('hidden');
+  document.getElementById('cl-title').textContent=`${ctx.type} — ${ctx.fn}`;
+  document.getElementById('cl-sub').textContent=[ctx.spec,ctx.date,ctx.dc].filter(Boolean).join(' · ');
+  renderCL(items);
+  document.getElementById('setup-wrap').classList.add('hidden');
+  document.getElementById('cl-wrap').classList.remove('hidden');
+  updateProg();
+}
+function prefillXL(pt,items){
+  const raw=pt.raw;
+  items.forEach(item=>{
+    const keys=Object.keys(raw);
+    const slug=item.name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10);
+    const mk=keys.find(k=>k.toLowerCase().replace(/[^a-z0-9]/g,'').startsWith(slug));
+    if(mk){
+      const v=String(raw[mk]).trim().toUpperCase();
+      if(v==='YES'||v==='Y'||v==='1'){states[item.id].status='ok';states[item.id].fromXL=true;}
     }
-
-    const statusClass = s.status === 'complete' ? 'complete' :
-                        s.status === 'doc' ? 'doc-deficient' :
-                        s.status === 'sign' ? 'sign-deficient' :
-                        s.status === 'na' ? 'na' : '';
-
-    const typeBadge = item.type === 'electronic'
-      ? `<span class="tag tag-e">E</span>`
-      : `<span class="tag tag-p">P</span>`;
-
-    const noteHtml = item.signNote ? `<div style="font-size:11px;color:var(--yellow);margin-top:2px">⚡ ${item.signNote}</div>` : '';
-    const naNote = isNA && item.naNote ? `<div style="font-size:11px;color:var(--gray);margin-top:2px">— ${item.naNote}</div>` : '';
-
-    const respVal = s.resp || (typeof item.defaultResp === 'function' ? item.defaultResp(ctx) : item.defaultResp) || '';
-
-    // Build responsibility selector
-    let respHtml = '';
-    if (s.status === 'doc' || s.status === 'sign') {
-      const allStaff = [
-        ...staffRegistry.doctors.map(s => ({ label: `د. ${s.name}`, val: `د. ${s.name}` })),
-        ...staffRegistry.nurses.map(s => ({ label: `ن. ${s.name}`, val: `ن. ${s.name}` })),
-        { label: 'N/A', val: 'N/A' },
-        { label: 'SW', val: 'SW' },
-        { label: 'Nutrition', val: 'Nutrition' },
-        { label: 'Anesthesia', val: 'Anesthesia' },
-      ];
-      const opts = allStaff.map(o =>
-        `<option value="${o.val}" ${s.resp === o.val ? 'selected' : ''}>${o.label}</option>`
-      ).join('');
-      const customVal = s.resp && !allStaff.find(o => o.val === s.resp) ? s.resp : '';
-      respHtml = `<div class="item-full" style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-        <select class="resp-input" style="flex:1;min-width:140px" onchange="setResp('${item.id}',this.value)">
-          <option value="">-- اختر المسؤول --</option>
-          ${opts}
-          <option value="__custom__">+ إضافة اسم يدوي</option>
-        </select>
-        <input class="resp-input" id="custom-${item.id}" placeholder="اسم يدوي..." style="flex:1;min-width:120px;display:${customVal||s.resp==='__custom__'?'block':'none'}" value="${customVal}" onchange="setResp('${item.id}',this.value)" />
+  });
+}
+ 
+// ═══════════════════════════════════
+// RENDER CHECKLIST
+// ═══════════════════════════════════
+const SEC_CLS={PHYSICIAN:'ph',MULTIDISCIPLINARY:'mu',NURSE:'nu','OPERATION RECORD':'op','ENDOSCOPY FORMS':'op','ESWL FORMS':'op'};
+const SEC_IC={
+  PHYSICIAN:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  MULTIDISCIPLINARY:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  NURSE:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  'OPERATION RECORD':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+  'ENDOSCOPY FORMS':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+  'ESWL FORMS':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>'
+};
+ 
+function renderCL(items){
+  const wrap=document.getElementById('cl-content');
+  wrap.innerHTML='';
+  // Group by section
+  const secMap={};const secOrder=[];
+  items.forEach(item=>{
+    if(!secMap[item.sec]){secMap[item.sec]={e:[],p:[]};secOrder.push(item.sec);}
+    if(item.type==='P')secMap[item.sec].p.push(item);
+    else secMap[item.sec].e.push(item);
+  });
+  secOrder.forEach(sec=>{
+    const{e,p}=secMap[sec];
+    const cls=SEC_CLS[sec]||'ph';
+    const icPath=SEC_IC[sec]||'<circle cx="12" cy="12" r="10"/>';
+    const total=[...e,...p].length;
+    const done=[...e,...p].filter(i=>states[i.id]?.status).length;
+    const secDiv=document.createElement('div');
+    secDiv.className='cl-sec';
+    secDiv.id='sec-'+sec.replace(/\s/g,'-');
+    // Section header
+    const sh=document.createElement('div');
+    sh.className=`cl-sh ${cls}`;
+    sh.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--${cls}-t);flex-shrink:0">${icPath}</svg><span class="cl-sh-name" style="color:var(--${cls}-t)">${sec}</span><span class="cl-sh-cnt">${done}/${total}</span>`;
+    secDiv.appendChild(sh);
+    // Electronic items
+    const eWrap=document.createElement('div');
+    e.forEach(item=>eWrap.appendChild(buildRow(item)));
+    secDiv.appendChild(eWrap);
+    // Paper block
+    if(p.length){
+      const pb=document.createElement('div');
+      pb.className='paper-blk';
+      pb.innerHTML=`<div class="paper-blk-hd"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Paper Documents</div>`;
+      p.forEach(item=>pb.appendChild(buildRow(item)));
+      secDiv.appendChild(pb);
+    }
+    wrap.appendChild(secDiv);
+  });
+}
+ 
+function buildRow(item){
+  const s=states[item.id];
+  const stCls=s.status==='ok'?'s-ok':s.status==='doc'?'s-doc':s.status==='sign'?'s-sign':s.status==='na'?'s-na':'';
+  const isVerify=!!item.verify;
+  const div=document.createElement('div');
+  div.className=`cl-row${stCls?' '+stCls:''}${item.key?' key-row':''}${isVerify?' ev-row':''}`;
+  div.id='row-'+item.id;
+  const xlTag=s.fromXL?`<span style="font:700 9px/1 inherit;padding:1px 5px;border-radius:3px;background:var(--ok-bg);color:var(--ok-t)">Excel</span>`:'';
+  const typeBadge=item.type==='P'
+    ?`<span class="tbadge tbadge-p">P</span>`
+    :(isVerify?`<span class="tbadge tbadge-e" style="background:var(--ev-bg);color:var(--ev-t)">E</span>`:`<span class="tbadge tbadge-e">E</span>`);
+  // Build bottom
+  let botHtml='';
+  if(s.status==='doc'||s.status==='sign'){
+    if(item.resp==='custom'){
+      // CONSENTS — multi-form
+      const cForms=s.consents||[];
+      const formsHtml=cForms.map((cf,ci)=>`
+        <div class="cons-item" id="cons-${item.id}-${ci}">
+          <div class="cons-hd"><span class="cons-num">Form ${ci+1}</span><button class="cons-rm" onclick="rmConsent('${item.id}',${ci})">×</button></div>
+          <div class="cons-row">
+            <input class="resp-inp" placeholder="Form name e.g. Surgery Consent" value="${cf.name||''}" oninput="setConsent('${item.id}',${ci},'name',this.value)" style="flex:2;min-width:130px">
+            <select class="resp-sel" onchange="setConsent('${item.id}',${ci},'defType',this.value)" style="flex:1;min-width:80px">
+              <option value="doc" ${cf.defType==='doc'?'selected':''}>Doc</option>
+              <option value="sign" ${cf.defType==='sign'?'selected':''}>Sign</option>
+            </select>
+          </div>
+          <input class="resp-inp" placeholder="Responsible — Doctor name..." value="${cf.resp||''}" oninput="setConsent('${item.id}',${ci},'resp',this.value)" style="width:100%">
+        </div>`).join('');
+      botHtml=`<div class="cl-bot">
+        <div class="resp-row"><span class="resp-lbl">${t('resp_lbl')}</span><span style="font-size:11px;color:var(--t3)">Add each form separately below</span></div>
+        <div class="cons-wrap" id="cons-wrap-${item.id}">${formsHtml}</div>
+        <button class="add-cons" onclick="addConsent('${item.id}')">＋ ${t('add_consent')}</button>
+      </div>`;
+    } else {
+      const fixed=isFixedResp(item);
+      const fixedVal=getFixedResp(item,ctx);
+      let respHtml='';
+      if(fixed&&fixedVal){
+        if(!s.resp)states[item.id].resp=fixedVal;
+        respHtml=`<span class="resp-fixed">${fixedVal}</span>`;
+      } else if(item.resp==='nurse'){
+        // Nurse — free text input
+        respHtml=`<input class="resp-inp" placeholder="Nurse name..." value="${s.resp||''}" oninput="setResp('${item.id}',this.value)">`;
+      } else {
+        // Dropdown physicians
+        const dOpts=staff.docs.map(d=>`<option value="${d.name}" ${s.resp===d.name?'selected':''}>${d.name}</option>`).join('');
+        const cur=s.resp||fixedVal||'';
+        respHtml=`<select class="resp-sel" onchange="setResp('${item.id}',this.value)">
+          <option value="">${t('sel_resp')}</option>
+          ${dOpts?`<optgroup label="Physicians">${dOpts}</optgroup>`:''}
+          <option value="N/A" ${cur==='N/A'?'selected':''}>N/A</option>
+          <option value="SW" ${cur==='SW'?'selected':''}>SW</option>
+          <option value="DT" ${cur==='DT'?'selected':''}>DT</option>
+          <option value="Anesthesia" ${cur==='Anesthesia'?'selected':''}>Anesthesia</option>
+          <option value="OR Nurse" ${cur==='OR Nurse'?'selected':''}>OR Nurse</option>
+        </select>`;
+      }
+      botHtml=`<div class="cl-bot">
+        <div class="resp-row"><span class="resp-lbl">${t('resp_lbl')}</span>${respHtml}</div>
+        <textarea class="notes-inp" rows="1" placeholder="${t('notes_ph')}" oninput="setNotes('${item.id}',this.value)">${s.notes||''}</textarea>
       </div>`;
     }
-
-    container.innerHTML += `
-      <div class="checklist-item ${statusClass}" id="row-${item.id}">
-        <div>
-          <div class="item-name">${typeBadge} ${item.name}</div>
-          ${noteHtml}${naNote}
-        </div>
-        <div class="item-actions">
-          <button class="action-btn ${s.status==='complete'?'active-complete':''}" onclick="setStatus('${item.id}','complete')">✓</button>
-          <button class="action-btn ${s.status==='doc'?'active-doc':''}" onclick="setStatus('${item.id}','doc')">Doc</button>
-          <button class="action-btn ${s.status==='sign'?'active-sign':''}" onclick="setStatus('${item.id}','sign')">Sign</button>
-          <button class="action-btn ${s.status==='na'?'active-na':''}" onclick="toggleNA('${item.id}')">N/A</button>
-        </div>
-        ${respHtml}
+  }
+  div.innerHTML=`
+    <div class="stripe"></div>
+    <div class="type-col">${typeBadge}</div>
+    <div class="cl-body">
+      <div class="cl-name${s.status==='na'?' na-line':''}">
+        <span class="cl-name-txt">${item.name}${xlTag?(' '+xlTag):''}</span>
+        <div class="tt"><div class="tt-btn" tabindex="0">i</div><div class="tt-box">${item.hint}</div></div>
       </div>
-    `;
-  });
+      ${botHtml}
+    </div>
+    <div class="cl-acts">
+      <button class="sbtn ${s.status==='ok'?'aok':''}" onclick="setSt('${item.id}','ok')">✓</button>
+      <button class="sbtn ${s.status==='doc'?'adoc':''}" onclick="setSt('${item.id}','doc')">Doc</button>
+      <button class="sbtn ${s.status==='sign'?'asign':''}" onclick="setSt('${item.id}','sign')">Sign</button>
+      <button class="sbtn ${s.status==='na'?'ana':''}" onclick="setSt('${item.id}','na')">N/A</button>
+    </div>`;
+  return div;
 }
-
-function setStatus(id, status) {
-  const item = (ITEMS_MAP[ctx.fileType] || ICU_ITEMS).find(i => i.id === id);
-  if (itemStates[id].status === status) {
-    itemStates[id].status = null;
-  } else {
-    itemStates[id].status = status;
-    if (status === 'doc' || status === 'sign') {
-      if (!itemStates[id].resp) {
-        itemStates[id].resp = typeof item.defaultResp === 'function' ? item.defaultResp(ctx) : (item.defaultResp || '');
+ 
+function setSt(id,st){
+  const prev=states[id].status;
+  if(prev===st){states[id].status=null;states[id].resp='';}
+  else{
+    states[id].status=st;states[id].fromXL=false;
+    if(st==='na'){states[id].resp='N/A';}
+    if(st==='ok'){states[id].notes='';}
+  }
+  renderCL(getCL(ctx.type));updateProg();
+}
+function setResp(id,v){states[id].resp=v}
+function setNotes(id,v){states[id].notes=v}
+function addConsent(id){
+  if(!states[id].consents)states[id].consents=[];
+  states[id].consents.push({name:'',defType:'doc',resp:''});
+  renderCL(getCL(ctx.type));
+}
+function rmConsent(id,ci){
+  states[id].consents.splice(ci,1);
+  renderCL(getCL(ctx.type));
+}
+function setConsent(id,ci,field,val){
+  if(!states[id].consents)states[id].consents=[];
+  if(!states[id].consents[ci])states[id].consents[ci]={};
+  states[id].consents[ci][field]=val;
+}
+ 
+function updateProg(){
+  const items=getCL(ctx.type||'ICU');
+  const active=items.filter(i=>states[i.id]?.status!=='na');
+  const done=active.filter(i=>states[i.id]?.status);
+  const ok=done.filter(i=>states[i.id]?.status==='ok').length;
+  const doc=done.filter(i=>states[i.id]?.status==='doc').length;
+  const sign=done.filter(i=>states[i.id]?.status==='sign').length;
+  const pct=active.length?Math.round(done.length/active.length*100):0;
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('pg-ok').textContent=ok;
+  document.getElementById('pg-doc').textContent=doc;
+  document.getElementById('pg-sign').textContent=sign;
+}
+ 
+// ═══════════════════════════════════
+// REPORT
+// ═══════════════════════════════════
+function tryReport(){
+  const items=getCL(ctx.type);
+  const active=items.filter(i=>states[i.id]?.status!=='na');
+  const unc=active.filter(i=>!states[i.id]?.status);
+  if(unc.length>0&&!confirm(`${unc.length} ${t('incomplete_warn')}`))return;
+  showReport();
+}
+function showReport(){
+  const items=getCL(ctx.type);
+  let ok=0,doc=0,sign=0,na=0;
+  const defs=[];
+  items.forEach(item=>{
+    const s=states[item.id];if(!s)return;
+    if(s.status==='ok')ok++;
+    else if(s.status==='doc'){
+      doc++;
+      if(item.resp==='custom'&&s.consents?.length){
+        s.consents.forEach(cf=>{
+          defs.push({name:`Consents — ${cf.name||'(unnamed)'}`,sec:item.sec,type:item.type,defType:cf.defType,resp:cf.resp,notes:''});
+        });
+      } else {
+        defs.push({name:item.name,sec:item.sec,type:item.type,defType:'doc',resp:s.resp,notes:s.notes});
       }
     }
-  }
-  renderChecklist();
-  updateProgress();
-}
-
-function toggleNA(id) {
-  if (itemStates[id].status === 'na') {
-    itemStates[id].status = null;
-  } else {
-    itemStates[id].status = 'na';
-    itemStates[id].resp = '';
-  }
-  renderChecklist();
-  updateProgress();
-}
-
-function setResp(id, val) {
-  if (val === '__custom__') {
-    const el = document.getElementById('custom-' + id);
-    if (el) el.style.display = 'block';
-    return;
-  }
-  itemStates[id].resp = val;
-}
-
-function updateProgress() {
-  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
-  const active = items.filter(i => itemStates[i.id].status !== 'na');
-  const done = active.filter(i => itemStates[i.id].status !== null);
-  const pct = active.length ? (done.length / active.length * 100) : 0;
-  document.getElementById('progressFill').style.width = pct + '%';
-}
-
-function renderFileInfoBar(containerId) {
-  document.getElementById(containerId).innerHTML = `
-    <div class="fi-item"><span class="fi-label">رقم الملف:</span><span class="fi-value">${ctx.fileNum}</span></div>
-    <div class="fi-item"><span class="fi-label">النوع:</span><span class="fi-value">${FILE_TYPE_LABELS[ctx.fileType]||ctx.fileType}</span></div>
-    <div class="fi-item"><span class="fi-label">الخروج:</span><span class="fi-value">${DISCHARGE_LABELS[ctx.discharge]||ctx.discharge}</span></div>
-    ${ctx.date ? `<div class="fi-item"><span class="fi-label">التاريخ:</span><span class="fi-value">${ctx.date}</span></div>` : ''}
-  `;
-}
-
-// ===== REPORT =====
-function showReport() {
-  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
-  let complete = 0, doc = 0, sign = 0;
-  let deficiencies = [];
-
-  items.forEach(item => {
-    const s = itemStates[item.id];
-    if (s.status === 'complete') complete++;
-    else if (s.status === 'doc') { doc++; deficiencies.push({ name: item.name, type: 'doc', resp: s.resp }); }
-    else if (s.status === 'sign') { sign++; deficiencies.push({ name: item.name, type: 'sign', resp: s.resp }); }
+    else if(s.status==='sign'){
+      sign++;
+      if(item.resp==='custom'&&s.consents?.length){
+        s.consents.forEach(cf=>{
+          defs.push({name:`Consents — ${cf.name||'(unnamed)'}`,sec:item.sec,type:item.type,defType:cf.defType,resp:cf.resp,notes:''});
+        });
+      } else {
+        defs.push({name:item.name,sec:item.sec,type:item.type,defType:'sign',resp:s.resp,notes:s.notes});
+      }
+    }
+    else if(s.status==='na')na++;
   });
-
-  document.getElementById('statComplete').textContent = complete;
-  document.getElementById('statDoc').textContent = doc;
-  document.getElementById('statSign').textContent = sign;
-
-  const list = document.getElementById('deficiencyList');
-  if (deficiencies.length === 0) {
-    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--green);font-weight:600">✅ لا يوجد نقص في هذا الملف</div>`;
+  document.getElementById('s-ok').textContent=ok;
+  document.getElementById('s-doc').textContent=doc;
+  document.getElementById('s-sign').textContent=sign;
+  document.getElementById('s-na').textContent=na;
+  document.getElementById('rpt-sub').textContent=`${ctx.fn}  ·  ${ctx.type}  ·  ${ctx.date||'—'}  ·  ${ctx.dc||'—'}`;
+  const rows=document.getElementById('def-rows');
+  if(!defs.length){
+    rows.innerHTML=`<div class="empty-st"><div class="empty-ic">✅</div><div class="empty-t">No Deficiencies Found</div><div style="font-size:12px">This file is complete</div></div>`;
   } else {
-    list.innerHTML = deficiencies.map(d => `
-      <div class="deficiency-item">
-        <span class="def-badge ${d.type === 'doc' ? 'def-doc' : 'def-sign'}">${d.type === 'doc' ? 'Doc' : 'Sign'}</span>
+    rows.innerHTML=defs.map(d=>`
+      <div class="def-row">
+        <span class="def-bdg db-${d.defType}">${d.defType==='doc'?'Doc':'Sign'}</span>
         <div>
-          <div>${d.name}</div>
-          <div class="def-resp">المسؤول: ${d.resp || '—'}</div>
+          <div class="def-name">${d.name}</div>
+          <div class="def-sec">${d.sec} · ${d.type==='P'?'Paper':'Electronic'}</div>
+          ${d.notes?`<div class="def-note">📝 ${d.notes}</div>`:''}
         </div>
-      </div>
-    `).join('');
+        <span style="font-size:11px;color:var(--t3)">${d.sec}</span>
+        <span class="def-resp">${d.resp||'—'}</span>
+      </div>`).join('');
   }
-
-  renderFileInfoBar('fileInfoBar2');
-
-  document.getElementById('step2').classList.add('hidden');
-  document.getElementById('step3').classList.remove('hidden');
-  document.getElementById('s2').classList.remove('active');
-  document.getElementById('s2').classList.add('done');
-  document.getElementById('s3').classList.add('active');
+  nav('report');
 }
-
-function backToChecklist() {
-  document.getElementById('step3').classList.add('hidden');
-  document.getElementById('step2').classList.remove('hidden');
-  document.getElementById('s3').classList.remove('active');
-  document.getElementById('s2').classList.remove('done');
-  document.getElementById('s2').classList.add('active');
-}
-
-// ===== GOOGLE SHEETS INTEGRATION =====
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpXtlH3sEcPbM90xvwk4FOA1MQAJZmfK6qJ96OPT9iFDx86HU-EcySaQRelOuAawK7tQ/exec';
-
-async function saveToSheets() {
-  const btn = document.getElementById('saveBtn');
-  const status = document.getElementById('saveStatus');
-  
-  btn.disabled = true;
-  btn.textContent = '⏳ جاري الحفظ...';
-  status.style.color = 'var(--text2)';
-  status.textContent = '';
-
-  const items = ITEMS_MAP[ctx.fileType] || ICU_ITEMS;
-  const deficiencies = [];
-  items.forEach(item => {
-    const s = itemStates[item.id];
-    if (s.status === 'doc' || s.status === 'sign') {
-      deficiencies.push({ name: item.name, type: s.status, resp: s.resp || '' });
+ 
+// ═══════════════════════════════════
+// SAVE TO SHEETS
+// ═══════════════════════════════════
+async function saveSheets(){
+  const btn=document.getElementById('save-btn');
+  const items=getCL(ctx.type);
+  const allItems=items.map(i=>{
+    const s=states[i.id];
+    const st=s?.status==='ok'?'✓':s?.status==='doc'?'D':s?.status==='sign'?'S':'N';
+    return{id:i.id,name:i.name,sec:i.sec,type:i.type,status:st,resp:s?.resp||'',notes:s?.notes||''};
+  });
+  const defs=[];
+  items.forEach(item=>{
+    const s=states[item.id];if(!s)return;
+    if((s.status==='doc'||s.status==='sign')&&item.resp==='custom'&&s.consents?.length){
+      s.consents.forEach(cf=>defs.push({name:`Consents — ${cf.name}`,sec:item.sec,type:item.type,status:cf.defType==='doc'?'D':'S',resp:cf.resp,notes:''}));
+    } else if(s.status==='doc'||s.status==='sign'){
+      defs.push({name:item.name,sec:item.sec,type:item.type,status:s.status==='doc'?'D':'S',resp:s.resp||'',notes:s.notes||''});
     }
   });
-
-  const payload = {
-    fileNum: ctx.fileNum,
-    fileType: FILE_TYPE_LABELS[ctx.fileType] || ctx.fileType,
-    discharge: DISCHARGE_LABELS[ctx.discharge] || ctx.discharge,
-    dischargeDate: ctx.date || '',
-    analyst: ctx.analyst || '',
-    deficiencies: deficiencies,
-  };
-
-  try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json();
-    if (json.success) {
-      btn.textContent = '✅ تم الحفظ';
-      btn.style.background = 'var(--green)';
-      status.style.color = 'var(--green)';
-      status.textContent = 'تم الحفظ في Google Sheets بنجاح!';
-    } else {
-      throw new Error(json.error || 'خطأ غير معروف');
-    }
-  } catch(err) {
-    btn.disabled = false;
-    btn.textContent = '☁️ حفظ في Google Sheets';
-    btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
-    status.style.color = 'var(--red)';
-    status.textContent = 'فشل الحفظ: ' + err.message;
+  const payload={action:'saveAnalysis',fileNum:ctx.fn,listType:ctx.type,specialty:ctx.spec,discharge:ctx.dc,dischargeDate:ctx.date,doctorName:ctx.doc,analyst:ctx.analyst,items:allItems,deficiencies:defs};
+  btn.disabled=true;
+  btn.innerHTML=`<div class="spin"></div> Saving...`;
+  try{
+    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbxY7ER5QBcaWFDZsViV9cFI3fmbRctm6RD8C8TYaS70JcTBGuvyMWl4fSmPhCRkJLhZ/exec';
+    const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.success){
+      btn.innerHTML='✓ Saved!';btn.style.background='var(--ok)';
+      const pi=patients.findIndex(p=>p.mrn===ctx.fn);
+      if(pi>=0){patients[pi].done=true;renderPtList();}
+      toast('Saved to Google Sheets','ok');
+    } else throw new Error(data.error||'Error');
+  }catch(err){
+    btn.disabled=false;
+    btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> '+t('save_sheets');
+    btn.style.background='';
+    toast(err.message,'err');
   }
 }
-
-function resetAll() {
-  document.getElementById('step2').classList.add('hidden');
-  document.getElementById('step3').classList.add('hidden');
-  document.getElementById('step1').classList.remove('hidden');
-  ['s1','s2','s3'].forEach(s => { document.getElementById(s).classList.remove('active','done'); });
-  document.getElementById('s1').classList.add('active');
-  document.getElementById('fileNum').value = '';
-  document.getElementById('fileType').value = '';
-  document.getElementById('dischargeType').value = '';
-  document.getElementById('diabeticStatus').value = 'na';
-  document.getElementById('mainDoc').value = '';
-  document.getElementById('dischargeDate').value = '';
-  document.getElementById('analystName').value = '';
-  document.getElementById('startBtn').disabled = true;
-  document.getElementById('progressFill').style.width = '0%';
+ 
+// ═══════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════
+function showStab(n){
+  ['staff','spec','cl','cfg'].forEach(x=>{
+    document.getElementById('sc-'+x).classList.toggle('hidden',x!==n);
+    document.getElementById('stab-'+x).classList.toggle('active',x===n);
+  });
 }
+function addStaff(t){
+  const id=t==='doc'?'new-doc':'new-nur';
+  const name=document.getElementById(id).value.trim();
+  if(!name)return;
+  const key=t==='doc'?'docs':'nurses';
+  if(staff[key].find(s=>s.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff[key].push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  document.getElementById(id).value='';
+  renderStaff();toast(name+' added','ok');
+}
+function rmStaff(t,id){
+  const key=t==='doc'?'docs':'nurses';
+  staff[key]=staff[key].filter(s=>s.id!==id);
+  localStorage.setItem('staff',JSON.stringify(staff));renderStaff();
+}
+function renderStaff(){
+  ['doc','nur'].forEach(t=>{
+    const key=t==='doc'?'docs':'nurses';
+    const el=document.getElementById(t+'-tags');
+    el.innerHTML=staff[key].length?staff[key].map(s=>`<div class="tag"><span>${s.name}</span><button class="tag-x" onclick="rmStaff('${t}','${s.id}')">×</button></div>`).join(''):`<span style="font-size:12px;color:var(--t4)">No names added yet</span>`;
+  });
+  const sel=document.getElementById('new-doc-spec');
+  if(sel){sel.innerHTML='<option value="All">All Specialties</option>'+specs.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');}
+}
+function addSpec(){
+  const name=document.getElementById('new-spec-name').value.trim();
+  const type=document.getElementById('new-spec-type').value;
+  if(!name)return;
+  if(specs.find(s=>s.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  specs.push({name,type});localStorage.setItem('specs',JSON.stringify(specs));
+  document.getElementById('new-spec-name').value='';
+  renderSpecs();toast(name+' added','ok');
+}
+function rmSpec(i){specs.splice(i,1);localStorage.setItem('specs',JSON.stringify(specs));renderSpecs();}
+function renderSpecs(){
+  const tbl=document.getElementById('spec-tbl');
+  tbl.innerHTML=`<thead><tr><th>Specialty</th><th>List Type</th><th style="width:36px"></th></tr></thead><tbody>${specs.map((s,i)=>`<tr><td style="font-weight:500">${s.name}</td><td style="color:var(--t3)">${s.type}</td><td><button onclick="rmSpec(${i})" style="background:none;border:none;color:var(--doc);cursor:pointer;font-size:15px;padding:0">×</button></td></tr>`).join('')}</tbody>`;
+}
+ 
+// CL Editor
+function renderCLEditor(){
+  const type=document.getElementById('cl-editor-type').value;
+  const items=getCL(type);
+  const body=document.getElementById('cl-editor-body');
+  body.innerHTML=items.map(item=>`
+    <div class="cle-row">
+      <span class="cle-name">${item.name}</span>
+      <select class="cle-sel" data-id="${item.id}" data-field="type">
+        <option value="E" ${item.type==='E'?'selected':''}>E</option>
+        <option value="P" ${item.type==='P'?'selected':''}>P</option>
+      </select>
+      <select class="cle-sel" data-id="${item.id}" data-field="cond">
+        <option value="always" ${item.cond==='always'?'selected':''}>Always required</option>
+        <option value="always_na" ${item.cond==='always_na'?'selected':''}>Always N/A</option>
+        <option value="na_if_absent" ${item.cond==='na_if_absent'?'selected':''}>N/A if absent</option>
+        <option value="dama_only" ${item.cond==='dama_only'?'selected':''}>DAMA only</option>
+        <option value="diab_unstable" ${item.cond==='diab_unstable'?'selected':''}>Diabetic unstable</option>
+        <option value="csection" ${item.cond==='csection'?'selected':''}>C-Section</option>
+        <option value="transfer_ward" ${item.cond==='transfer_ward'?'selected':''}>Transfer to ward</option>
+      </select>
+      <input class="cle-sel" data-id="${item.id}" data-field="resp" value="${item.resp}" placeholder="resp">
+      <select class="cle-sel" data-id="${item.id}" data-field="verify">
+        <option value="" ${!item.verify?'selected':''}>No</option>
+        <option value="true" ${item.verify?'selected':''}>Yes (verify)</option>
+      </select>
+      <span></span>
+    </div>`).join('');
+}
+function saveCLEdits(){
+  const type=document.getElementById('cl-editor-type').value;
+  if(!clEdits[type])clEdits[type]={};
+  document.querySelectorAll('.cle-sel').forEach(el=>{
+    const id=el.getAttribute('data-id');
+    const field=el.getAttribute('data-field');
+    if(!clEdits[type][id])clEdits[type][id]={};
+    clEdits[type][id][field]=field==='verify'?(el.value==='true'):el.value;
+  });
+  localStorage.setItem('clEdits',JSON.stringify(clEdits));
+  toast('Checklist saved','ok');
+}
+ 
+function saveCfg(){
+  const url=document.getElementById('cfg-url').value.trim();
+  const d=document.getElementById('cfg-delinq').value;
+  if(url)localStorage.setItem('scriptUrl',url);
+  if(d)localStorage.setItem('delinquencyTarget',d);
+  toast('Settings saved','ok');
+}
+ 
+// ═══════════════════════════════════
+// TOAST
+// ═══════════════════════════════════
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+ 
+// ═══════════════════════════════════
+// NEW FILE
+// ═══════════════════════════════════
+function newFile(){
+  states={};ctx={};
+  ['f-num','f-doc','f-analyst'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-type').value='';
+  document.getElementById('f-dc').value='discharged';
+  document.getElementById('f-date').value='';
+  document.getElementById('f-diab').value='na';
+  document.getElementById('f-deliv').value='normal';
+  document.getElementById('f-trans').value='no';
+  document.getElementById('cl-wrap').classList.add('hidden');
+  document.getElementById('setup-wrap').classList.remove('hidden');
+  document.getElementById('sb-file').classList.add('hidden');
+  document.getElementById('start-btn').disabled=true;
+  const btn=document.getElementById('save-btn');
+  btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg> '+t('save_sheets');
+  btn.style.background='';btn.disabled=false;
+  nav('home');
+}
+ 
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+function init(){
+  if(theme==='dark')document.documentElement.setAttribute('data-theme','dark');
+  const ic=document.getElementById('theme-ic');
+  if(theme==='dark')ic.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  applyLang();renderStaff();renderSpecs();renderCLEditor();
+  const su=localStorage.getItem('scriptUrl');if(su)document.getElementById('cfg-url').value=su;
+  const sd=localStorage.getItem('delinquencyTarget');if(sd)document.getElementById('cfg-delinq').value=sd;
+}
+init();
 </script>
 </body>
 </html>
