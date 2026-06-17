@@ -1843,38 +1843,4 @@ function init(){
 init();
 </script>
 </body>
-</html>} else if(item.resp==='phys_nurse'){
-        const mrpDocPN=ctx.doc||'';
-        const allDocsPH=[...(mrpDocPN?[mrpDocPN]:[]),...staff.docs.filter(d=>d.name!==mrpDocPN).map(d=>d.name)];
-        const curRespPN=s.resp||mrpDocPN||'';
-        if(!s.resp&&mrpDocPN)states[item.id].resp=mrpDocPN;
-        const isNurseOnlyPN=!curRespPN.includes(' / ')&&staff.nurses.some(n=>n.name===curRespPN);
-        const isBothPN=curRespPN.includes(' / ');
-        const pnType=isBothPN?'both':isNurseOnlyPN?'nurse':(curRespPN?'phys':'');
-        const dOptsPH=allDocsPH.map(n=>'<option value="'+n+'" '+(curRespPN===n?'selected':'')+'>'+(n===mrpDocPN?n+' (MRP)':n)+'</option>').join('');
-        const nurOptsPH=staff.nurses.map(n=>'<option value="'+n.name+'" '+(curRespPN===n.name?'selected':'')+'>'+n.name+'</option>').join('');
-        respHtml='<div style="display:flex;flex-direction:column;gap:6px;flex:1">'
-          +'<select class="resp-sel" id="pn-type-'+item.id+'" onchange="setPNType(''+item.id+'',this.value)">'
-          +'<option value="">-- Who is responsible? --</option>'
-          +'<option value="phys" '+(pnType==='phys'||!pnType?'selected':'')+'>Physician</option>'
-          +'<option value="nurse" '+(pnType==='nurse'?'selected':'')+'>Nurse</option>'
-          +'<option value="both" '+(pnType==='both'?'selected':'')+'>Both (Physician + Nurse)</option>'
-          +'</select>'
-          +'<div id="pn-phys-wrap-'+item.id+'" style="display:'+(pnType!=='nurse'?'flex':'none')+';flex-direction:column;gap:5px">'
-          +'<select class="resp-sel" id="pn-doc-'+item.id+'" onchange="setPNDoc(''+item.id+'',this.value)">'
-          +'<option value="">-- Select Doctor --</option>'
-          +dOptsPH
-          +'</select>'
-          +'<div style="display:flex;gap:5px;align-items:center">'
-          +'<input class="resp-inp" id="pn-doc-new-'+item.id+'" placeholder="Add new doctor..." style="flex:1;font-size:11px;padding:4px 8px">'
-          +'<button onclick="saveNewDoc(''+item.id+'')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap;flex-shrink:0">+ Add</button>'
-          +'</div></div>'
-          +'<div id="pn-nurse-wrap-'+item.id+'" style="display:'+(pnType==='nurse'||pnType==='both'?'flex':'none')+';flex-direction:column;gap:5px">'
-          +'<select class="resp-sel" id="pn-nur-'+item.id+'" onchange="setPNNurseSel(''+item.id+'',this.value)">'
-          +'<option value="">-- Select Nurse --</option>'
-          +nurOptsPH
-          +'</select>'
-          +'<div style="display:flex;gap:5px;align-items:center">'
-          +'<input class="resp-inp" id="pn-nur-new-'+item.id+'" placeholder="Add new nurse..." style="flex:1;font-size:11px;padding:4px 8px">'
-          +'<button onclick="saveNewNurse(''+item.id+'')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap;flex-shrink:0">+ Add</button>'
-          +'</div></div></div>';
+</html>
