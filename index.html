@@ -1599,7 +1599,7 @@ async function saveSheets(){
   btn.disabled=true;
   btn.innerHTML=`<div class="spin"></div> Saving...`;
   try{
-    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbxY7ER5QBcaWFDZsViV9cFI3fmbRctm6RD8C8TYaS70JcTBGuvyMWl4fSmPhCRkJLhZ/exec';
+    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbzQceqHOlDwYl9NAXP_Y_wy4GwJ6teurzkizD4H9RV_Kj4Ohbu-5NacLUhkC3qvvDtH/exec';
     const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
     const data=await res.json();
     if(data.success){
