@@ -40,7 +40,7 @@
 html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
 body.ar{font-family:'IBM Plex Sans Arabic',sans-serif;direction:rtl}
- 
+
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:200;height:52px;background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:8px;box-shadow:0 1px 0 rgba(255,255,255,.08)}
 .tb-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
@@ -51,10 +51,10 @@ body.ar{font-family:'IBM Plex Sans Arabic',sans-serif;direction:rtl}
 .tb-btn{display:flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);color:#fff;font:500 11px/1 inherit;cursor:pointer;transition:background .14s;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{background:rgba(255,255,255,.18)}
 .tb-btn svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:2;flex-shrink:0}
- 
+
 /* LAYOUT */
 .shell{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 52px)}
- 
+
 /* SIDEBAR */
 .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:14px 0 24px;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;display:flex;flex-direction:column;gap:0}
 .sb-sec{padding:0 10px;margin-bottom:14px}
@@ -66,7 +66,7 @@ body.ar .sb-item{text-align:right}
 .sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.75;flex-shrink:0;opacity:.7}
 .sb-item.active svg{opacity:1}
 .sb-div{height:1px;background:var(--border);margin:8px 14px}
- 
+
 /* Sidebar file card */
 .sb-file{background:var(--navy);border-radius:var(--r);padding:12px;margin:0 10px 8px;color:#fff}
 .sfc-lbl{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:8px}
@@ -74,7 +74,7 @@ body.ar .sb-item{text-align:right}
 .sfc-row:last-child{border-bottom:none}
 .sfc-k{color:rgba(255,255,255,.5)}
 .sfc-v{font-weight:600;font-family:monospace;font-size:11px}
- 
+
 /* Sidebar progress */
 .sb-prog{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:11px;margin:0 10px}
 .sbp-hd{font:600 10px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);margin-bottom:7px}
@@ -86,14 +86,14 @@ body.ar .sb-item{text-align:right}
 .sbp-n{font-size:15px;font-weight:700}
 .sbp-s.ok .sbp-n{color:var(--ok)}.sbp-s.doc .sbp-n{color:var(--doc)}.sbp-s.sign .sbp-n{color:var(--sign)}
 .sbp-l{font:700 8px/1 inherit;text-transform:uppercase;letter-spacing:.04em;color:var(--t4);margin-top:1px}
- 
+
 /* MAIN */
 .main{padding:22px;overflow-y:auto}
 .pg{display:none}.pg.active{display:block}
 .ph{margin-bottom:18px}
 .ph-title{font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.025em;margin-bottom:2px}
 .ph-sub{font-size:12px;color:var(--t3);font-family:monospace}
- 
+
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:12px;overflow:hidden}
 .card-hd{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
@@ -106,7 +106,7 @@ body.ar .sb-item{text-align:right}
 .card-hd-r{margin-left:auto;font-size:11px;color:var(--t3)}
 body.ar .card-hd-r{margin-left:0;margin-right:auto}
 .card-bd{padding:16px}
- 
+
 /* FORM */
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .fgrid .full{grid-column:1/-1}
@@ -116,7 +116,7 @@ body.ar .card-hd-r{margin-left:0;margin-right:auto}
 .fi,.fs{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--r);font:13px/1 inherit;color:var(--t1);background:var(--surface);outline:none;transition:border-color .14s,box-shadow .14s;direction:inherit;-webkit-appearance:none;appearance:none}
 .fi:focus,.fs:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,107,.1)}
 .fhint{font-size:11px;color:var(--t4)}
- 
+
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--r);border:none;font:600 12px/1 inherit;cursor:pointer;transition:all .16s;white-space:nowrap}
 .btn:active{transform:scale(.98)}
@@ -130,7 +130,7 @@ body.ar .card-hd-r{margin-left:0;margin-right:auto}
 .btn-ok:hover{background:#085F5B}
 .btn-ok:disabled{opacity:.5;cursor:not-allowed}
 .btn-full{width:100%;justify-content:center;padding:10px}
- 
+
 /* UPLOAD */
 .upload-z{border:2px dashed var(--border2);border-radius:var(--rl);padding:30px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
 .upload-z:hover,.upload-z.over{border-color:var(--navy);background:var(--ph-bg)}
@@ -155,7 +155,7 @@ body.ar .card-hd-r{margin-left:0;margin-right:auto}
 .b-done{background:var(--ok-bg);color:var(--ok-t)}
 .idiv{display:flex;align-items:center;gap:8px;margin:11px 0 8px;font-size:11px;color:var(--t4)}
 .idiv-line{flex:1;height:1px;background:var(--border)}
- 
+
 /* LEGEND */
 .legend{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);flex-wrap:wrap}
 .lg-lbl{font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.07em;color:var(--t4);flex-shrink:0}
@@ -163,7 +163,7 @@ body.ar .card-hd-r{margin-left:0;margin-right:auto}
 .tbadge{display:inline-flex;align-items:center;font:700 8px/1 inherit;letter-spacing:.04em;padding:2px 6px;border-radius:3px;white-space:nowrap}
 .tbadge-e{background:var(--ph-bg);color:var(--ph-t)}
 .tbadge-p{background:var(--mu-bg);color:var(--mu-t)}
- 
+
 /* SECTION BOX */
 .cl-sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
 .cl-sh{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border)}
@@ -172,12 +172,12 @@ body.ar .card-hd-r{margin-left:0;margin-right:auto}
 .ph .cl-sh-name{color:var(--ph-t)}.mu .cl-sh-name{color:var(--mu-t)}.nu .cl-sh-name{color:var(--nu-t)}.op .cl-sh-name{color:var(--op-t)}
 .cl-sh-cnt{margin-left:auto;font-size:11px;color:var(--t3);font-family:monospace}
 body.ar .cl-sh-cnt{margin-left:0;margin-right:auto}
- 
+
 /* PAPER BLOCK */
 .paper-blk{margin:6px 10px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .paper-blk-hd{padding:5px 11px;font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.07em;color:var(--t4);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px}
 .paper-blk-hd svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
- 
+
 /* ROW */
 .cl-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);position:relative;transition:background .1s}
 .cl-row:last-child{border-bottom:none}
@@ -188,26 +188,26 @@ body.ar .cl-sh-cnt{margin-left:0;margin-right:auto}
 .cl-row.s-na{background:var(--na-bg);opacity:.6}
 .cl-row.key-row{background:rgba(239,68,68,.03)}
 [data-theme=dark] .cl-row.key-row{background:rgba(239,68,68,.06)}
- 
+
 /* Left stripe */
 .stripe{width:2.5px;flex-shrink:0;border-radius:2px;align-self:stretch;background:var(--border);margin-top:1px;transition:background .15s}
 .s-ok .stripe{background:var(--ok)}.s-doc .stripe{background:var(--doc)}.s-sign .stripe{background:var(--sign)}.s-na .stripe{background:var(--na-b)}
 body.ar .stripe{order:99}
- 
+
 /* Type badge */
 .type-col{display:flex;gap:3px;flex-shrink:0;margin-top:1px;flex-direction:column;align-items:flex-start;min-width:30px}
- 
+
 /* E·verify — color only, no border text badge */
 .cl-row.ev-row{background:rgba(194,65,12,.03)}
 [data-theme=dark] .cl-row.ev-row{background:rgba(194,65,12,.07)}
 .cl-row.ev-row .tbadge-e{background:var(--ev-bg);color:var(--ev-t)}
- 
+
 /* Content */
 .cl-body{flex:1;min-width:0}
 .cl-name{font:500 13px/1.35 inherit;color:var(--t1);display:flex;align-items:flex-start;flex-wrap:wrap;gap:5px}
 .cl-name-txt{min-width:0}
 .cl-name.na-line{text-decoration:line-through;color:var(--t4)}
- 
+
 /* Tooltip */
 .tt{position:relative;display:inline-flex;vertical-align:middle;margin-left:3px;flex-shrink:0}
 body.ar .tt{margin-left:0;margin-right:3px}
@@ -216,7 +216,7 @@ body.ar .tt{margin-left:0;margin-right:3px}
 .tt-box{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0D1B2E;color:rgba(255,255,255,.92);font:400 11px/1.45 inherit;padding:7px 10px;border-radius:6px;width:210px;z-index:100;white-space:normal;pointer-events:none}
 .tt-box::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:#0D1B2E}
 .tt:hover .tt-box,.tt:focus-within .tt-box{display:block}
- 
+
 /* Actions */
 .cl-acts{display:flex;gap:3px;flex-shrink:0;margin-left:auto;padding-top:1px}
 body.ar .cl-acts{margin-left:0;margin-right:auto}
@@ -226,7 +226,7 @@ body.ar .cl-acts{margin-left:0;margin-right:auto}
 .sbtn.adoc{background:var(--doc-bg);border-color:var(--doc-b);color:var(--doc-t)}
 .sbtn.asign{background:var(--sign-bg);border-color:var(--sign-b);color:var(--sign-t)}
 .sbtn.ana{background:var(--na-bg);border-color:var(--na-b);color:var(--na)}
- 
+
 /* Bottom: resp + notes */
 .cl-bot{margin-top:9px;padding-top:8px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:6px}
 .resp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -238,7 +238,7 @@ body.ar .cl-acts{margin-left:0;margin-right:auto}
 .resp-inp{flex:1;min-width:130px;direction:inherit}
 .notes-inp{width:100%;border:1.5px solid var(--border);border-radius:5px;padding:5px 8px;font:12px/1.4 inherit;color:var(--t1);background:var(--surface);outline:none;resize:none;min-height:30px;direction:inherit}
 .notes-inp:focus{border-color:var(--navy)}
- 
+
 /* CONSENTS MULTI-FORM */
 .cons-wrap{margin-top:8px}
 .cons-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 10px;margin-bottom:6px;display:flex;flex-direction:column;gap:6px}
@@ -250,7 +250,7 @@ body.ar .cl-acts{margin-left:0;margin-right:auto}
 .cons-row .resp-inp,.cons-row .resp-sel{flex:1;min-width:100px}
 .add-cons{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:5px;border:1.5px dashed var(--border2);background:transparent;color:var(--t3);font:500 11px/1 inherit;cursor:pointer;transition:all .14s;margin-top:2px}
 .add-cons:hover{border-color:var(--navy);color:var(--navy)}
- 
+
 /* REPORT */
 .rpt-banner{background:var(--navy);border-radius:var(--rl);padding:18px 22px;color:#fff;display:flex;align-items:center;gap:14px;margin-bottom:12px}
 .rpt-ic{width:38px;height:38px;background:rgba(255,255,255,.1);border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -273,7 +273,7 @@ body.ar .cl-acts{margin-left:0;margin-right:auto}
 .def-note{font-size:11px;color:var(--t3);margin-top:3px;font-style:italic}
 .def-resp{font-weight:600;color:var(--t2);font-size:12px}
 .rpt-actions{display:flex;gap:8px;flex-wrap:wrap}
- 
+
 /* SETTINGS */
 .stabs{display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:14px}
 .stab{flex:1;padding:7px 8px;border:none;border-radius:6px;background:none;font:500 12px/1 inherit;color:var(--t3);cursor:pointer;transition:all .14s;text-align:center}
@@ -290,7 +290,7 @@ body.ar .spec-tbl th{text-align:right}
 .tag-x:hover{color:#fff}
 .add-row{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end}
 .add-row .fi{flex:1;min-width:110px}
- 
+
 /* Settings checklist editor */
 .cl-editor{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
 .cle-hd{display:grid;grid-template-columns:1fr 80px 120px 100px 100px 36px;gap:8px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
@@ -300,7 +300,7 @@ body.ar .spec-tbl th{text-align:right}
 .cle-sel{border:1.5px solid var(--border);border-radius:5px;padding:4px 6px;font:11px/1 inherit;color:var(--t1);background:var(--surface);outline:none;width:100%}
 .cle-sel:focus{border-color:var(--navy)}
 .cle-rm{background:none;border:none;color:var(--doc);cursor:pointer;font-size:15px;padding:0;line-height:1}
- 
+
 /* TOASTS */
 .toasts{position:fixed;bottom:18px;right:18px;z-index:999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
 body.ar .toasts{right:auto;left:18px}
@@ -319,7 +319,7 @@ body.ar .toasts{right:auto;left:18px}
 </style>
 </head>
 <body>
- 
+
 <!-- TOPBAR -->
 <div class="topbar">
   <a class="tb-logo" href="#" onclick="return false">
@@ -342,7 +342,7 @@ body.ar .toasts{right:auto;left:18px}
     <span class="tr" data-k="new_file">New File</span>
   </button>
 </div>
- 
+
 <div class="shell">
 <!-- SIDEBAR -->
 <nav class="sidebar">
@@ -384,7 +384,7 @@ body.ar .toasts{right:auto;left:18px}
     </div>
   </div>
 </nav>
- 
+
 <main class="main">
 <!-- HOME -->
 <div class="pg active" id="pg-home">
@@ -431,7 +431,7 @@ body.ar .toasts{right:auto;left:18px}
     </div>
   </div>
 </div>
- 
+
 <!-- ANALYSIS -->
 <div class="pg" id="pg-analysis">
   <div id="setup-wrap">
@@ -461,7 +461,6 @@ body.ar .toasts{right:auto;left:18px}
           <div class="fg"><label class="fl tr" data-k="dc_type">Discharge Type</label>
             <select class="fs" id="f-dc">
               <option value="discharged">Discharged</option>
-              <option value="Improved">Improved</option>
               <option value="transferred_hospital">Transferred to Hospital</option>
               <option value="dama">DAMA</option>
               <option value="expired">Expired</option>
@@ -497,7 +496,7 @@ body.ar .toasts{right:auto;left:18px}
       </div>
     </div>
   </div>
- 
+
   <div id="cl-wrap" class="hidden">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div>
@@ -523,7 +522,7 @@ body.ar .toasts{right:auto;left:18px}
     </div>
   </div>
 </div>
- 
+
 <!-- REPORT -->
 <div class="pg" id="pg-report">
   <div class="rpt-banner">
@@ -563,7 +562,7 @@ body.ar .toasts{right:auto;left:18px}
     </button>
   </div>
 </div>
- 
+
 <!-- SETTINGS -->
 <div class="pg" id="pg-settings">
   <div class="ph">
@@ -576,7 +575,7 @@ body.ar .toasts{right:auto;left:18px}
     <button class="stab" id="stab-cl" onclick="showStab('cl')">📋 <span class="tr" data-k="checklists">Checklists</span></button>
     <button class="stab" id="stab-cfg" onclick="showStab('cfg')">⚙ <span class="tr" data-k="config">Config</span></button>
   </div>
- 
+
   <!-- Staff -->
   <div id="sc-staff">
     <div class="card">
@@ -601,7 +600,7 @@ body.ar .toasts{right:auto;left:18px}
       </div>
     </div>
   </div>
- 
+
   <!-- Specialties -->
   <div id="sc-spec" class="hidden">
     <div class="card">
@@ -622,7 +621,7 @@ body.ar .toasts{right:auto;left:18px}
       </div>
     </div>
   </div>
- 
+
   <!-- Checklists editor -->
   <div id="sc-cl" class="hidden">
     <div class="card">
@@ -652,7 +651,7 @@ body.ar .toasts{right:auto;left:18px}
       </div>
     </div>
   </div>
- 
+
   <!-- Config -->
   <div id="sc-cfg" class="hidden">
     <div class="card">
@@ -671,7 +670,7 @@ body.ar .toasts{right:auto;left:18px}
     </div>
   </div>
 </div>
- 
+
 </main>
 </div><!-- shell -->
 <div class="toasts" id="toasts"></div>
@@ -684,7 +683,7 @@ const TR={
 en:{nav:'Navigation',home:'Home',analysis:'Analysis',report:'Report',settings:'Settings',new_file:'New File',welcome:'Welcome',welcome_sub:'Upload patient list from Careware or enter file number manually',upload_title:'Upload Patient List (Excel)',click_upload:'Click or drag Excel file here',export_hint:'Export from Careware → Upload here',sel_pt:'Select patient to analyze',file_n:'File #',dc_date:'Discharge Date',dept:'Department',status:'Status',or_manual:'or enter manually',continue:'Continue',file_info:'File Information',file_info_sub:'Complete all fields to begin analysis',list_type:'List Type',specialty:'Specialty',dc_type:'Discharge Type',doctor_mrp:'Doctor Name (MRP)',sugar:'Blood Sugar Status',delivery:'Delivery Type',transfer_q:'Transferred to ward during stay?',analyst:'Analyst Name',start_analysis:'Start Analysis',back:'Back',view_report:'View Report',report_title:'Analysis Report',complete:'Complete',type:'Type',document:'Document',section:'Section',responsible:'Responsible',save_sheets:'Save to Google Sheets',print:'Print',back_analysis:'Back to Analysis',staff:'Staff',specialties:'Specialties',checklists:'Checklists',config:'Config',physicians:'Physicians',nurses:'Nurses',add:'Add',save:'Save Changes',kpi_targets:'KPI Targets',delinquency_target:'Delinquency Target (%)',delinquency_hint:'Below this % = On Target',save_settings:'Save Settings',settings_sub:'Manage staff, specialties, checklists and configuration',cur_file:'Current File',progress:'Progress',doc_type:'Document Type',e_auto:'Electronic — from Excel',e_verify:'E — Verify in system',p_paper:'Paper — physical file',key_mand:'Mandatory item',notes_ph:'Notes e.g. Missing: 15 March',resp_lbl:'Responsible',sel_resp:'Select...',dc:'Discharge',edit_checklists:'Edit Checklists',add_consent:'Add consent form',incomplete_warn:'items not reviewed yet. Continue?'},
 ar:{nav:'التنقل',home:'الرئيسية',analysis:'التحليل',report:'التقرير',settings:'الإعدادات',new_file:'ملف جديد',welcome:'أهلاً وسهلاً',welcome_sub:'ارفع قائمة المرضى من Careware أو أدخل رقم الملف يدوياً',upload_title:'رفع قائمة المرضى (Excel)',click_upload:'اضغط أو اسحب ملف Excel هنا',export_hint:'صدّر من Careware ← ارفع هنا',sel_pt:'اختر مريضاً للتحليل',file_n:'رقم الملف',dc_date:'تاريخ الخروج',dept:'القسم',status:'الحالة',or_manual:'أو أدخل يدوياً',continue:'متابعة',file_info:'بيانات الملف',file_info_sub:'أكمل جميع الحقول للبدء',list_type:'نوع القائمة',specialty:'التخصص',dc_type:'نوع الخروج',doctor_mrp:'اسم الطبيب المسؤول',sugar:'حالة السكر',delivery:'نوع الولادة',transfer_q:'هل تحول لقسم أثناء الإقامة؟',analyst:'اسم المحلل',start_analysis:'بدء التحليل',back:'رجوع',view_report:'عرض التقرير',report_title:'تقرير التحليل',complete:'مكتمل',type:'النوع',document:'الوثيقة',section:'القسم',responsible:'المسؤول',save_sheets:'حفظ في Google Sheets',print:'طباعة',back_analysis:'العودة للتحليل',staff:'الكوادر',specialties:'التخصصات',checklists:'القوائم',config:'الإعدادات',physicians:'الأطباء',nurses:'التمريض',add:'إضافة',save:'حفظ التغييرات',kpi_targets:'أهداف المؤشرات',delinquency_target:'الهدف المسموح للنقص (%)',delinquency_hint:'الملفات أقل من هذه النسبة = ضمن الهدف',save_settings:'حفظ الإعدادات',settings_sub:'إدارة الكوادر والتخصصات والقوائم والإعدادات',cur_file:'الملف الحالي',progress:'التقدم',doc_type:'نوع الوثيقة',e_auto:'إلكتروني — من Excel',e_verify:'إلكتروني — تحقق من النظام',p_paper:'ورقي — ملف فعلي',key_mand:'بند إلزامي',notes_ph:'ملاحظات مثال: ناقص 15 مارس',resp_lbl:'المسؤول',sel_resp:'اختر...',dc:'الخروج',edit_checklists:'تعديل القوائم',add_consent:'إضافة نموذج موافقة',incomplete_warn:'عناصر لم تُراجع. هل تريد المتابعة؟'}
 };
- 
+
 // ═══════════════════════════════════
 // STATE
 // ═══════════════════════════════════
@@ -705,10 +704,10 @@ let patients=[];
 let ctx={};
 let states={};// id→{status,resp,notes,consents:[{name,defType,resp}]}
 let clEdits={};// overrides for checklist items per type
- 
+
 // Load custom checklist edits
 try{clEdits=JSON.parse(localStorage.getItem('clEdits')||'{}')}catch(e){clEdits={}}
- 
+
 // ═══════════════════════════════════
 // CHECKLIST DEFINITIONS
 // cond: always|always_na|dama_only|diab_unstable|csection|transfer_ward|na_if_absent|picu_only|nicu_only|nursery_only
@@ -943,7 +942,7 @@ NICU:[
   {id:'nicu_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
   {id:'nicu_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
   {id:'nicu_ndc',sec:'NURSE',name:'Nursery Unit — Discharge Checklist Form',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
-  {id:'nicu_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nicu_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'custom_free',key:false,hint:'Always required — paper'},
   {id:'nicu_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
 ],
 Nursery:[
@@ -974,7 +973,7 @@ Nursery:[
   {id:'nur_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
   {id:'nur_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
   {id:'nur_ndc',sec:'NURSE',name:'Nursery Unit — Discharge Checklist Form',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
-  {id:'nur_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
+  {id:'nur_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'custom_free',key:false,hint:'Always required — paper'},
   {id:'nur_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
 ],
 Endoscopy:[
@@ -1030,7 +1029,7 @@ ESWL:[
   {id:'ew_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
 ]
 };
- 
+
 // Merge with user edits
 function getCL(type){
   const base=BASE_CL[type]||[];
@@ -1040,7 +1039,7 @@ function getCL(type){
     return item;
   });
 }
- 
+
 // ═══════════════════════════════════
 // CONDITION LOGIC
 // ═══════════════════════════════════
@@ -1055,7 +1054,7 @@ function isNA(item,c){
     default:return false;
   }
 }
- 
+
 // ═══════════════════════════════════
 // RESPONSIBLE RESOLVER
 // ═══════════════════════════════════
@@ -1068,9 +1067,9 @@ function getFixedResp(item,c){
 function isFixedResp(item){
   return item.resp==='fixed:N/A'||item.resp==='fixed:SW'||item.resp==='fixed:DT'||
     item.resp==='fixed:Anesthesia'||item.resp==='fixed:OR Nurse'||
-    item.resp==='fixed:SW + Physician'||item.resp==='phys_nurse'||item.resp==='phys';
+    item.resp==='fixed:SW + Physician'||item.resp==='phys';
 }
- 
+
 // ═══════════════════════════════════
 // LANG & THEME
 // ═══════════════════════════════════
@@ -1093,7 +1092,7 @@ function toggleTheme(){
   if(theme==='dark')ic.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
   else ic.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
 }
- 
+
 // ═══════════════════════════════════
 // NAV
 // ═══════════════════════════════════
@@ -1104,7 +1103,7 @@ function nav(p){
   document.getElementById('nav-'+p)?.classList.add('active');
   window.scrollTo(0,0);
 }
- 
+
 // ═══════════════════════════════════
 // EXCEL
 // ═══════════════════════════════════
@@ -1172,7 +1171,7 @@ function selManual(){
   if(found?.dc)document.getElementById('f-date').value=found.dc;
   nav('analysis');valSetup();
 }
- 
+
 // ═══════════════════════════════════
 // SETUP
 // ═══════════════════════════════════
@@ -1193,7 +1192,7 @@ function valSetup(){
   document.getElementById('start-btn').disabled=!ok;
 }
 ['f-num','f-type'].forEach(id=>document.getElementById(id)?.addEventListener('input',valSetup));
- 
+
 function startAnalysis(){
   const tp=document.getElementById('f-type').value;
   if(!tp)return;
@@ -1242,7 +1241,7 @@ function prefillXL(pt,items){
     }
   });
 }
- 
+
 // ═══════════════════════════════════
 // RENDER CHECKLIST
 // ═══════════════════════════════════
@@ -1255,7 +1254,7 @@ const SEC_IC={
   'ENDOSCOPY FORMS':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
   'ESWL FORMS':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>'
 };
- 
+
 function renderCL(items){
   const wrap=document.getElementById('cl-content');
   wrap.innerHTML='';
@@ -1295,7 +1294,7 @@ function renderCL(items){
     wrap.appendChild(secDiv);
   });
 }
- 
+
 function buildRow(item){
   const s=states[item.id];
   const stCls=s.status==='ok'?'s-ok':s.status==='doc'?'s-doc':s.status==='sign'?'s-sign':s.status==='na'?'s-na':'';
@@ -1334,7 +1333,31 @@ function buildRow(item){
       const fixed=isFixedResp(item);
       const fixedVal=getFixedResp(item,ctx);
       let respHtml='';
-      if(fixed&&fixedVal){
+      if(item.resp==='custom_free'){
+        // Free text input
+        respHtml=`<input class="resp-inp" placeholder="Name..." value="${s.resp||''}" oninput="setResp('${item.id}',this.value)" style="flex:1">`;
+      } else if(item.resp==='phys_nurse'){
+        // Physician OR Nurse OR Both
+        const dOpts=staff.docs.map(d=>`<option value="${d.name}" ${s.resp===d.name?'selected':''}>${d.name}</option>`).join('');
+        const curResp=s.resp||'';
+        respHtml=`<div style="display:flex;flex-direction:column;gap:6px;flex:1">
+          <select class="resp-sel" id="pn-type-${item.id}" onchange="setPNType('${item.id}',this.value)" style="flex:1">
+            <option value="">-- Select --</option>
+            <option value="phys" ${curResp&&!curResp.includes('Nurse')&&!curResp.includes('Both')?'selected':''}>Physician</option>
+            <option value="nurse" ${curResp&&curResp.includes('Nurse')&&!curResp.includes('/')? 'selected':''}>Nurse</option>
+            <option value="both" ${curResp&&curResp.includes('/')? 'selected':''}>Both (Physician + Nurse)</option>
+          </select>
+          <div id="pn-phys-${item.id}" style="display:${!curResp||(!curResp.includes('Nurse')&&!curResp.includes('Both'))?'flex':'none'};gap:6px">
+            <select class="resp-sel" id="pn-doc-${item.id}" onchange="setPNDoc('${item.id}',this.value)">
+              <option value="">-- Doctor --</option>
+              ${dOpts}
+            </select>
+          </div>
+          <div id="pn-nurse-${item.id}" style="display:${curResp&&(curResp.includes('Nurse')||curResp.includes('/'))?'flex':'none'};gap:6px">
+            <input class="resp-inp" id="pn-nur-${item.id}" placeholder="Nurse name..." value="${curResp&&curResp.includes('/')?curResp.split(' / ')[1]||'':curResp.includes('Nurse')?curResp:''}" oninput="setPNNurse('${item.id}',this.value)" style="flex:1">
+          </div>
+        </div>`;
+      } else if(fixed&&fixedVal){
         if(!s.resp)states[item.id].resp=fixedVal;
         respHtml=`<span class="resp-fixed">${fixedVal}</span>`;
       } else if(item.resp==='nurse'){
@@ -1378,7 +1401,7 @@ function buildRow(item){
     </div>`;
   return div;
 }
- 
+
 function setSt(id,st){
   const prev=states[id].status;
   if(prev===st){states[id].status=null;states[id].resp='';}
@@ -1390,6 +1413,33 @@ function setSt(id,st){
   renderCL(getCL(ctx.type));updateProg();
 }
 function setResp(id,v){states[id].resp=v}
+function setPNType(id,type){
+  const phys=document.getElementById('pn-phys-'+id);
+  const nur=document.getElementById('pn-nurse-'+id);
+  if(type==='phys'){phys.style.display='flex';nur.style.display='none';}
+  else if(type==='nurse'){phys.style.display='none';nur.style.display='flex';}
+  else if(type==='both'){phys.style.display='flex';nur.style.display='flex';}
+  else{phys.style.display='none';nur.style.display='none';}
+  // Update resp value
+  const docSel=document.getElementById('pn-doc-'+id);
+  const nurInp=document.getElementById('pn-nur-'+id);
+  if(type==='phys'&&docSel)states[id].resp=docSel.value||'Physician';
+  else if(type==='nurse'&&nurInp)states[id].resp='Nurse: '+(nurInp.value||'');
+  else if(type==='both'&&docSel&&nurInp)states[id].resp=(docSel.value||'Physician')+' / '+(nurInp.value||'Nurse');
+  else states[id].resp='';
+}
+function setPNDoc(id,val){
+  states[id].resp=val;
+  const type=document.getElementById('pn-type-'+id)?.value;
+  const nurInp=document.getElementById('pn-nur-'+id);
+  if(type==='both'&&nurInp)states[id].resp=val+' / '+(nurInp.value||'Nurse');
+}
+function setPNNurse(id,val){
+  const type=document.getElementById('pn-type-'+id)?.value;
+  const docSel=document.getElementById('pn-doc-'+id);
+  if(type==='nurse')states[id].resp='Nurse: '+val;
+  else if(type==='both')states[id].resp=(docSel?.value||'Physician')+' / '+val;
+}
 function setNotes(id,v){states[id].notes=v}
 function addConsent(id){
   if(!states[id].consents)states[id].consents=[];
@@ -1405,7 +1455,7 @@ function setConsent(id,ci,field,val){
   if(!states[id].consents[ci])states[id].consents[ci]={};
   states[id].consents[ci][field]=val;
 }
- 
+
 function updateProg(){
   const items=getCL(ctx.type||'ICU');
   const active=items.filter(i=>states[i.id]?.status!=='na');
@@ -1419,7 +1469,7 @@ function updateProg(){
   document.getElementById('pg-doc').textContent=doc;
   document.getElementById('pg-sign').textContent=sign;
 }
- 
+
 // ═══════════════════════════════════
 // REPORT
 // ═══════════════════════════════════
@@ -1482,7 +1532,7 @@ function showReport(){
   }
   nav('report');
 }
- 
+
 // ═══════════════════════════════════
 // SAVE TO SHEETS
 // ═══════════════════════════════════
@@ -1523,7 +1573,7 @@ async function saveSheets(){
     toast(err.message,'err');
   }
 }
- 
+
 // ═══════════════════════════════════
 // SETTINGS
 // ═══════════════════════════════════
@@ -1572,7 +1622,7 @@ function renderSpecs(){
   const tbl=document.getElementById('spec-tbl');
   tbl.innerHTML=`<thead><tr><th>Specialty</th><th>List Type</th><th style="width:36px"></th></tr></thead><tbody>${specs.map((s,i)=>`<tr><td style="font-weight:500">${s.name}</td><td style="color:var(--t3)">${s.type}</td><td><button onclick="rmSpec(${i})" style="background:none;border:none;color:var(--doc);cursor:pointer;font-size:15px;padding:0">×</button></td></tr>`).join('')}</tbody>`;
 }
- 
+
 // CL Editor
 function renderCLEditor(){
   const type=document.getElementById('cl-editor-type').value;
@@ -1614,7 +1664,7 @@ function saveCLEdits(){
   localStorage.setItem('clEdits',JSON.stringify(clEdits));
   toast('Checklist saved','ok');
 }
- 
+
 function saveCfg(){
   const url=document.getElementById('cfg-url').value.trim();
   const d=document.getElementById('cfg-delinq').value;
@@ -1622,7 +1672,7 @@ function saveCfg(){
   if(d)localStorage.setItem('delinquencyTarget',d);
   toast('Settings saved','ok');
 }
- 
+
 // ═══════════════════════════════════
 // TOAST
 // ═══════════════════════════════════
@@ -1632,7 +1682,7 @@ function toast(msg,type='info'){
   document.getElementById('toasts').appendChild(el);
   setTimeout(()=>el.remove(),3500);
 }
- 
+
 // ═══════════════════════════════════
 // NEW FILE
 // ═══════════════════════════════════
@@ -1654,7 +1704,7 @@ function newFile(){
   btn.style.background='';btn.disabled=false;
   nav('home');
 }
- 
+
 // ═══════════════════════════════════
 // INIT
 // ═══════════════════════════════════
