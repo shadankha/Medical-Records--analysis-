@@ -1364,18 +1364,26 @@ function buildRow(item){
         // Nurse — free text input
         respHtml=`<input class="resp-inp" placeholder="Nurse name..." value="${s.resp||''}" oninput="setResp('${item.id}',this.value)">`;
       } else {
-        // Dropdown physicians
-        const dOpts=staff.docs.map(d=>`<option value="${d.name}" ${s.resp===d.name?'selected':''}>${d.name}</option>`).join('');
+        // Dropdown physicians with MRP + save new
+        const mrpDoc=ctx.doc||'';
+        const allDocs2=[...(mrpDoc?[{name:mrpDoc}]:[]),...staff.docs.filter(d=>d.name!==mrpDoc)];
+        const dOpts=allDocs2.map(d=>`<option value="${d.name}" ${s.resp===d.name?'selected':''}>${d.name}${d.name===mrpDoc?' (MRP)':''}</option>`).join('');
         const cur=s.resp||fixedVal||'';
-        respHtml=`<select class="resp-sel" onchange="setResp('${item.id}',this.value)">
-          <option value="">${t('sel_resp')}</option>
-          ${dOpts?`<optgroup label="Physicians">${dOpts}</optgroup>`:''}
-          <option value="N/A" ${cur==='N/A'?'selected':''}>N/A</option>
-          <option value="SW" ${cur==='SW'?'selected':''}>SW</option>
-          <option value="DT" ${cur==='DT'?'selected':''}>DT</option>
-          <option value="Anesthesia" ${cur==='Anesthesia'?'selected':''}>Anesthesia</option>
-          <option value="OR Nurse" ${cur==='OR Nurse'?'selected':''}>OR Nurse</option>
-        </select>`;
+        respHtml=`<div style="display:flex;flex-direction:column;gap:6px;flex:1">
+          <select class="resp-sel" onchange="setResp('${item.id}',this.value)">
+            <option value="">${t('sel_resp')}</option>
+            ${dOpts?`<optgroup label="Physicians">${dOpts}</optgroup>`:''}
+            <option value="N/A" ${cur==='N/A'?'selected':''}>N/A</option>
+            <option value="SW" ${cur==='SW'?'selected':''}>SW</option>
+            <option value="DT" ${cur==='DT'?'selected':''}>DT</option>
+            <option value="Anesthesia" ${cur==='Anesthesia'?'selected':''}>Anesthesia</option>
+            <option value="OR Nurse" ${cur==='OR Nurse'?'selected':''}>OR Nurse</option>
+          </select>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="resp-inp" id="new-doc-inline-${item.id}" placeholder="New doctor name..." style="flex:1" oninput="void(0)">
+            <button onclick="saveNewDocInline('${item.id}')" style="padding:5px 9px;border-radius:5px;border:1.5px solid var(--border);background:var(--surface);font:600 11px/1 inherit;color:var(--t2);cursor:pointer;white-space:nowrap">+ Save</button>
+          </div>
+        </div>`;
       }
       botHtml=`<div class="cl-bot">
         <div class="resp-row"><span class="resp-lbl">${t('resp_lbl')}</span>${respHtml}</div>
@@ -1439,6 +1447,55 @@ function setPNNurse(id,val){
   const docSel=document.getElementById('pn-doc-'+id);
   if(type==='nurse')states[id].resp='Nurse: '+val;
   else if(type==='both')states[id].resp=(docSel?.value||'Physician')+' / '+val;
+}
+function setPNNurseSel(id,val){
+  states[id].resp=val;
+  const type=document.getElementById('pn-type-'+id)?.value;
+  const docSel=document.getElementById('pn-doc-'+id);
+  if(type==='both')states[id].resp=(docSel?.value||'Physician')+' / '+val;
+}
+function saveNewDoc(id){
+  const inp=document.getElementById('pn-doc-new-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter doctor name','warn');return;}
+  if(staff.docs.find(d=>d.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.docs.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';
+  renderStaff();
+  // Set as selected resp
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' saved','ok');
+}
+function saveNewNurse(id){
+  const inp=document.getElementById('pn-nur-new-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter nurse name','warn');return;}
+  if(staff.nurses.find(n=>n.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.nurses.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';
+  renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' saved','ok');
+}
+function saveNewDocInline(id){
+  const inp=document.getElementById('new-doc-inline-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter doctor name','warn');return;}
+  if(staff.docs.find(d=>d.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.docs.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';
+  renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' saved','ok');
 }
 function setNotes(id,v){states[id].notes=v}
 function addConsent(id){
