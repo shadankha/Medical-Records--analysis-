@@ -1033,9 +1033,19 @@ ESWL:[
 // Merge with user edits
 function getCL(type){
   const base=BASE_CL[type]||[];
+  // Reload from localStorage each time to get latest
+  try{clEdits=JSON.parse(localStorage.getItem('clEdits')||'{}')}catch(e){clEdits={};}
   const edits=clEdits[type]||{};
-  return base.map(item=>{
-    if(edits[item.id])return Object.assign({},item,edits[item.id]);
+  return base.map(function(item){
+    if(edits[item.id]){
+      const merged=Object.assign({},item);
+      const ed=edits[item.id];
+      if(ed.type)merged.type=ed.type;
+      if(ed.cond)merged.cond=ed.cond;
+      if(ed.resp)merged.resp=ed.resp;
+      if(ed.verify!==undefined)merged.verify=ed.verify==='true'||ed.verify===true;
+      return merged;
+    }
     return item;
   });
 }
@@ -1670,41 +1680,49 @@ function renderCLEditor(){
   const type=document.getElementById('cl-editor-type').value;
   const items=getCL(type);
   const body=document.getElementById('cl-editor-body');
-  body.innerHTML=items.map(item=>`
-    <div class="cle-row">
-      <span class="cle-name">${item.name}</span>
-      <select class="cle-sel" data-id="${item.id}" data-field="type">
-        <option value="E" ${item.type==='E'?'selected':''}>E</option>
-        <option value="P" ${item.type==='P'?'selected':''}>P</option>
-      </select>
-      <select class="cle-sel" data-id="${item.id}" data-field="cond">
-        <option value="always" ${item.cond==='always'?'selected':''}>Always required</option>
-        <option value="always_na" ${item.cond==='always_na'?'selected':''}>Always N/A</option>
-        <option value="na_if_absent" ${item.cond==='na_if_absent'?'selected':''}>N/A if absent</option>
-        <option value="dama_only" ${item.cond==='dama_only'?'selected':''}>DAMA only</option>
-        <option value="diab_unstable" ${item.cond==='diab_unstable'?'selected':''}>Diabetic unstable</option>
-        <option value="csection" ${item.cond==='csection'?'selected':''}>C-Section</option>
-        <option value="transfer_ward" ${item.cond==='transfer_ward'?'selected':''}>Transfer to ward</option>
-      </select>
-      <input class="cle-sel" data-id="${item.id}" data-field="resp" value="${item.resp}" placeholder="resp">
-      <select class="cle-sel" data-id="${item.id}" data-field="verify">
-        <option value="" ${!item.verify?'selected':''}>No</option>
-        <option value="true" ${item.verify?'selected':''}>Yes (verify)</option>
-      </select>
-      <span></span>
-    </div>`).join('');
+  let html='';
+  items.forEach(function(item){
+    html+='<div class="cle-row">'+
+      '<span class="cle-name" title="'+item.name+'">'+item.name.slice(0,35)+(item.name.length>35?'...':'')+'</span>'+
+      '<select class="cle-sel" data-id="'+item.id+'" data-field="type">'+
+        '<option value="E"'+(item.type==='E'?' selected':'')+'>E</option>'+
+        '<option value="P"'+(item.type==='P'?' selected':'')+'>P</option>'+
+      '</select>'+
+      '<select class="cle-sel" data-id="'+item.id+'" data-field="cond">'+
+        '<option value="always"'+(item.cond==='always'?' selected':'')+'>Always required</option>'+
+        '<option value="always_na"'+(item.cond==='always_na'?' selected':'')+'>Always N/A</option>'+
+        '<option value="na_if_absent"'+(item.cond==='na_if_absent'?' selected':'')+'>N/A if absent</option>'+
+        '<option value="dama_only"'+(item.cond==='dama_only'?' selected':'')+'>DAMA only</option>'+
+        '<option value="diab_unstable"'+(item.cond==='diab_unstable'?' selected':'')+'>Diabetic unstable</option>'+
+        '<option value="csection"'+(item.cond==='csection'?' selected':'')+'>C-Section</option>'+
+        '<option value="transfer_ward"'+(item.cond==='transfer_ward'?' selected':'')+'>Transfer to ward</option>'+
+      '</select>'+
+      '<input class="cle-sel" data-id="'+item.id+'" data-field="resp" value="'+item.resp+'" placeholder="resp" style="font-size:11px">'+
+      '<select class="cle-sel" data-id="'+item.id+'" data-field="verify">'+
+        '<option value=""'+((!item.verify)?' selected':'')+'>No</option>'+
+        '<option value="true"'+((item.verify)?' selected':'')+'>Yes (verify)</option>'+
+      '</select>'+
+      '<span></span>'+
+    '</div>';
+  });
+  body.innerHTML=html;
 }
 function saveCLEdits(){
   const type=document.getElementById('cl-editor-type').value;
   if(!clEdits[type])clEdits[type]={};
-  document.querySelectorAll('.cle-sel').forEach(el=>{
+  document.querySelectorAll('.cle-sel[data-id]').forEach(function(el){
     const id=el.getAttribute('data-id');
     const field=el.getAttribute('data-field');
+    if(!id||!field)return;
     if(!clEdits[type][id])clEdits[type][id]={};
-    clEdits[type][id][field]=field==='verify'?(el.value==='true'):el.value;
+    if(field==='verify'){
+      clEdits[type][id][field]=el.value==='true'?true:false;
+    } else {
+      clEdits[type][id][field]=el.value;
+    }
   });
   localStorage.setItem('clEdits',JSON.stringify(clEdits));
-  toast('Checklist saved','ok');
+  toast(type+' checklist saved ✓','ok');
 }
 
 function saveCfg(){
