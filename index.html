@@ -925,7 +925,7 @@ NICU:[
   {id:'nicu_cd',sec:'PHYSICIAN',name:'Criteria for Discharge from (NICU)',type:'E',cond:'always',resp:'phys',key:false,hint:'Always required'},
   {id:'nicu_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
   {id:'nicu_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
-  {id:'nicu_neo_rec',sec:'MULTIDISCIPLINARY',name:'Neonatal Record + Baby\'s Footprint',type:'P',cond:'always',resp:'nurse',key:true,hint:'Always required — mandatory'},
+  {id:'nicu_neo_rec',sec:'MULTIDISCIPLINARY',name:'Neonatal Record + Baby\'s Footprint',type:'P',cond:'always',resp:'phys_nurse',key:true,hint:'Always required — mandatory'},
   {id:'nicu_milk',sec:'MULTIDISCIPLINARY',name:'Authorizing Consent to Give Artificial Baby Milk/Formula',type:'P',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
   {id:'nicu_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
   {id:'nicu_ssc',sec:'MULTIDISCIPLINARY',name:'Surgical Safety Checklist for non-OR',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in NICU'},
@@ -942,7 +942,7 @@ NICU:[
   {id:'nicu_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
   {id:'nicu_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
   {id:'nicu_ndc',sec:'NURSE',name:'Nursery Unit — Discharge Checklist Form',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
-  {id:'nicu_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'custom_free',key:false,hint:'Always required — paper'},
+  {id:'nicu_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'phys_nurse',key:false,hint:'Always required — paper'},
   {id:'nicu_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
 ],
 Nursery:[
@@ -956,7 +956,7 @@ Nursery:[
   {id:'nur_sho',sec:'PHYSICIAN',name:'Physician Shift Hand Over',type:'E',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
   {id:'nur_ipc',sec:'MULTIDISCIPLINARY',name:'Interdisciplinary Plan of Care',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
   {id:'nur_pfe',sec:'MULTIDISCIPLINARY',name:'Patient & Family Education Sheet',type:'E',cond:'always',resp:'phys_nurse',verify:true,key:false,hint:'Dr or Nurse missing = Doc (NR)'},
-  {id:'nur_neo_rec',sec:'MULTIDISCIPLINARY',name:'Neonatal Record + Baby\'s Footprint',type:'P',cond:'always',resp:'nurse',key:true,hint:'Always required — mandatory'},
+  {id:'nur_neo_rec',sec:'MULTIDISCIPLINARY',name:'Neonatal Record + Baby\'s Footprint',type:'P',cond:'always',resp:'phys_nurse',key:true,hint:'Always required — mandatory'},
   {id:'nur_milk',sec:'MULTIDISCIPLINARY',name:'Authorizing Consent to Give Artificial Baby Milk/Formula',type:'P',cond:'na_if_absent',resp:'fixed:N/A',key:false,hint:'If present = ✓ / If not = N/A'},
   {id:'nur_med',sec:'MULTIDISCIPLINARY',name:'Medication Reconciliation',type:'E',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Nursery'},
   {id:'nur_ssc',sec:'MULTIDISCIPLINARY',name:'Surgical Safety Checklist for non-OR',type:'P',cond:'always_na',resp:'fixed:N/A',key:false,hint:'Always N/A in Nursery'},
@@ -973,7 +973,7 @@ Nursery:[
   {id:'nur_ncp',sec:'NURSE',name:'Nursing Care Plan',type:'E',cond:'always',resp:'nurse',verify:true,key:false,hint:'Always required'},
   {id:'nur_npn',sec:'NURSE',name:"Nurses Progress Notes",type:'E',cond:'always',resp:'nurse',verify:true,key:true,hint:'Every day'},
   {id:'nur_ndc',sec:'NURSE',name:'Nursery Unit — Discharge Checklist Form',type:'P',cond:'always',resp:'nurse',key:false,hint:'Always required — paper'},
-  {id:'nur_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'custom_free',key:false,hint:'Always required — paper'},
+  {id:'nur_dw',sec:'NURSE',name:'Discharge Waiver',type:'P',cond:'always',resp:'phys_nurse',key:false,hint:'Always required — paper'},
   {id:'nur_cons',sec:'NURSE',name:'Consents',type:'P',cond:'always',resp:'custom',key:true,hint:'Verify NAME + SIGNATURE'},
 ],
 Endoscopy:[
@@ -1067,7 +1067,7 @@ function getFixedResp(item,c){
 function isFixedResp(item){
   return item.resp==='fixed:N/A'||item.resp==='fixed:SW'||item.resp==='fixed:DT'||
     item.resp==='fixed:Anesthesia'||item.resp==='fixed:OR Nurse'||
-    item.resp==='fixed:SW + Physician'||item.resp==='phys';
+    item.resp==='fixed:SW + Physician'||item.resp==='phys_nurse'||item.resp==='phys';
 }
 
 // ═══════════════════════════════════
@@ -1300,114 +1300,175 @@ function buildRow(item){
   const stCls=s.status==='ok'?'s-ok':s.status==='doc'?'s-doc':s.status==='sign'?'s-sign':s.status==='na'?'s-na':'';
   const isVerify=!!item.verify;
   const div=document.createElement('div');
-  div.className=`cl-row${stCls?' '+stCls:''}${item.key?' key-row':''}${isVerify?' ev-row':''}`;
+  div.className='cl-row'+(stCls?' '+stCls:'')+(item.key?' key-row':'')+(isVerify?' ev-row':'');
   div.id='row-'+item.id;
-  const xlTag=s.fromXL?`<span style="font:700 9px/1 inherit;padding:1px 5px;border-radius:3px;background:var(--ok-bg);color:var(--ok-t)">Excel</span>`:'';
+  const xlTag=s.fromXL?'<span style="font:700 9px/1 inherit;padding:1px 5px;border-radius:3px;background:var(--ok-bg);color:var(--ok-t)">Excel</span>':'';
   const typeBadge=item.type==='P'
-    ?`<span class="tbadge tbadge-p">P</span>`
-    :(isVerify?`<span class="tbadge tbadge-e" style="background:var(--ev-bg);color:var(--ev-t)">E</span>`:`<span class="tbadge tbadge-e">E</span>`);
-  // Build bottom
+    ?'<span class="tbadge tbadge-p">P</span>'
+    :(isVerify?'<span class="tbadge tbadge-e" style="background:var(--ev-bg);color:var(--ev-t)">E</span>':'<span class="tbadge tbadge-e">E</span>');
+
   let botHtml='';
   if(s.status==='doc'||s.status==='sign'){
-    if(item.resp==='custom'){
-      // CONSENTS — multi-form
-      const cForms=s.consents||[];
-      const formsHtml=cForms.map((cf,ci)=>`
-        <div class="cons-item" id="cons-${item.id}-${ci}">
-          <div class="cons-hd"><span class="cons-num">Form ${ci+1}</span><button class="cons-rm" onclick="rmConsent('${item.id}',${ci})">×</button></div>
-          <div class="cons-row">
-            <input class="resp-inp" placeholder="Form name e.g. Surgery Consent" value="${cf.name||''}" oninput="setConsent('${item.id}',${ci},'name',this.value)" style="flex:2;min-width:130px">
-            <select class="resp-sel" onchange="setConsent('${item.id}',${ci},'defType',this.value)" style="flex:1;min-width:80px">
-              <option value="doc" ${cf.defType==='doc'?'selected':''}>Doc</option>
-              <option value="sign" ${cf.defType==='sign'?'selected':''}>Sign</option>
-            </select>
-          </div>
-          <input class="resp-inp" placeholder="Responsible — Doctor name..." value="${cf.resp||''}" oninput="setConsent('${item.id}',${ci},'resp',this.value)" style="width:100%">
-        </div>`).join('');
-      botHtml=`<div class="cl-bot">
-        <div class="resp-row"><span class="resp-lbl">${t('resp_lbl')}</span><span style="font-size:11px;color:var(--t3)">Add each form separately below</span></div>
-        <div class="cons-wrap" id="cons-wrap-${item.id}">${formsHtml}</div>
-        <button class="add-cons" onclick="addConsent('${item.id}')">＋ ${t('add_consent')}</button>
-      </div>`;
-    } else {
-      const fixed=isFixedResp(item);
-      const fixedVal=getFixedResp(item,ctx);
-      let respHtml='';
-      if(item.resp==='custom_free'){
-        // Free text input
-        respHtml=`<input class="resp-inp" placeholder="Name..." value="${s.resp||''}" oninput="setResp('${item.id}',this.value)" style="flex:1">`;
-      } else if(item.resp==='phys_nurse'){
-        // Physician OR Nurse OR Both
-        const dOpts=staff.docs.map(d=>`<option value="${d.name}" ${s.resp===d.name?'selected':''}>${d.name}</option>`).join('');
-        const curResp=s.resp||'';
-        respHtml=`<div style="display:flex;flex-direction:column;gap:6px;flex:1">
-          <select class="resp-sel" id="pn-type-${item.id}" onchange="setPNType('${item.id}',this.value)" style="flex:1">
-            <option value="">-- Select --</option>
-            <option value="phys" ${curResp&&!curResp.includes('Nurse')&&!curResp.includes('Both')?'selected':''}>Physician</option>
-            <option value="nurse" ${curResp&&curResp.includes('Nurse')&&!curResp.includes('/')? 'selected':''}>Nurse</option>
-            <option value="both" ${curResp&&curResp.includes('/')? 'selected':''}>Both (Physician + Nurse)</option>
-          </select>
-          <div id="pn-phys-${item.id}" style="display:${!curResp||(!curResp.includes('Nurse')&&!curResp.includes('Both'))?'flex':'none'};gap:6px">
-            <select class="resp-sel" id="pn-doc-${item.id}" onchange="setPNDoc('${item.id}',this.value)">
-              <option value="">-- Doctor --</option>
-              ${dOpts}
-            </select>
-          </div>
-          <div id="pn-nurse-${item.id}" style="display:${curResp&&(curResp.includes('Nurse')||curResp.includes('/'))?'flex':'none'};gap:6px">
-            <input class="resp-inp" id="pn-nur-${item.id}" placeholder="Nurse name..." value="${curResp&&curResp.includes('/')?curResp.split(' / ')[1]||'':curResp.includes('Nurse')?curResp:''}" oninput="setPNNurse('${item.id}',this.value)" style="flex:1">
-          </div>
-        </div>`;
-      } else if(fixed&&fixedVal){
-        if(!s.resp)states[item.id].resp=fixedVal;
-        respHtml=`<span class="resp-fixed">${fixedVal}</span>`;
-      } else if(item.resp==='nurse'){
-        // Nurse — free text input
-        respHtml=`<input class="resp-inp" placeholder="Nurse name..." value="${s.resp||''}" oninput="setResp('${item.id}',this.value)">`;
-      } else {
-        // Dropdown physicians with MRP + save new
-        const mrpDoc=ctx.doc||'';
-        const allDocs2=[...(mrpDoc?[{name:mrpDoc}]:[]),...staff.docs.filter(d=>d.name!==mrpDoc)];
-        const dOpts=allDocs2.map(d=>`<option value="${d.name}" ${s.resp===d.name?'selected':''}>${d.name}${d.name===mrpDoc?' (MRP)':''}</option>`).join('');
-        const cur=s.resp||fixedVal||'';
-        respHtml=`<div style="display:flex;flex-direction:column;gap:6px;flex:1">
-          <select class="resp-sel" onchange="setResp('${item.id}',this.value)">
-            <option value="">${t('sel_resp')}</option>
-            ${dOpts?`<optgroup label="Physicians">${dOpts}</optgroup>`:''}
-            <option value="N/A" ${cur==='N/A'?'selected':''}>N/A</option>
-            <option value="SW" ${cur==='SW'?'selected':''}>SW</option>
-            <option value="DT" ${cur==='DT'?'selected':''}>DT</option>
-            <option value="Anesthesia" ${cur==='Anesthesia'?'selected':''}>Anesthesia</option>
-            <option value="OR Nurse" ${cur==='OR Nurse'?'selected':''}>OR Nurse</option>
-          </select>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input class="resp-inp" id="new-doc-inline-${item.id}" placeholder="New doctor name..." style="flex:1" oninput="void(0)">
-            <button onclick="saveNewDocInline('${item.id}')" style="padding:5px 9px;border-radius:5px;border:1.5px solid var(--border);background:var(--surface);font:600 11px/1 inherit;color:var(--t2);cursor:pointer;white-space:nowrap">+ Save</button>
-          </div>
-        </div>`;
-      }
-      botHtml=`<div class="cl-bot">
-        <div class="resp-row"><span class="resp-lbl">${t('resp_lbl')}</span>${respHtml}</div>
-        <textarea class="notes-inp" rows="1" placeholder="${t('notes_ph')}" oninput="setNotes('${item.id}',this.value)">${s.notes||''}</textarea>
-      </div>`;
-    }
+    botHtml=buildBottom(item,s);
   }
-  div.innerHTML=`
-    <div class="stripe"></div>
-    <div class="type-col">${typeBadge}</div>
-    <div class="cl-body">
-      <div class="cl-name${s.status==='na'?' na-line':''}">
-        <span class="cl-name-txt">${item.name}${xlTag?(' '+xlTag):''}</span>
-        <div class="tt"><div class="tt-btn" tabindex="0">i</div><div class="tt-box">${item.hint}</div></div>
-      </div>
-      ${botHtml}
-    </div>
-    <div class="cl-acts">
-      <button class="sbtn ${s.status==='ok'?'aok':''}" onclick="setSt('${item.id}','ok')">✓</button>
-      <button class="sbtn ${s.status==='doc'?'adoc':''}" onclick="setSt('${item.id}','doc')">Doc</button>
-      <button class="sbtn ${s.status==='sign'?'asign':''}" onclick="setSt('${item.id}','sign')">Sign</button>
-      <button class="sbtn ${s.status==='na'?'ana':''}" onclick="setSt('${item.id}','na')">N/A</button>
-    </div>`;
+
+  div.innerHTML=
+    '<div class="stripe"></div>'+
+    '<div class="type-col">'+typeBadge+'</div>'+
+    '<div class="cl-body">'+
+      '<div class="cl-name'+(s.status==='na'?' na-line':'')+'">'+
+        '<span class="cl-name-txt">'+item.name+(xlTag?' '+xlTag:'')+'</span>'+
+        '<div class="tt"><div class="tt-btn" tabindex="0">i</div><div class="tt-box">'+item.hint+'</div></div>'+
+      '</div>'+
+      botHtml+
+    '</div>'+
+    '<div class="cl-acts">'+
+      '<button class="sbtn '+(s.status==='ok'?'aok':'')+'" onclick="setSt(\''+item.id+'\',\'ok\')">&#10003;</button>'+
+      '<button class="sbtn '+(s.status==='doc'?'adoc':'')+'" onclick="setSt(\''+item.id+'\',\'doc\')">Doc</button>'+
+      '<button class="sbtn '+(s.status==='sign'?'asign':'')+'" onclick="setSt(\''+item.id+'\',\'sign\')">Sign</button>'+
+      '<button class="sbtn '+(s.status==='na'?'ana':'')+'" onclick="setSt(\''+item.id+'\',\'na\')">N/A</button>'+
+    '</div>';
   return div;
+}
+
+function buildBottom(item,s){
+  const mrpDoc=ctx.doc||'';
+
+  // CONSENTS — multi form
+  if(item.resp==='custom'){
+    const cForms=s.consents||[];
+    let formsHtml='';
+    cForms.forEach(function(cf,ci){
+      formsHtml+=
+        '<div class="cons-item">'+
+          '<div class="cons-hd"><span class="cons-num">Form '+(ci+1)+'</span><button class="cons-rm" onclick="rmConsent(\''+item.id+'\','+ci+')">&#215;</button></div>'+
+          '<div class="cons-row">'+
+            '<input class="resp-inp" placeholder="Form name e.g. Surgery Consent" value="'+(cf.name||'')+'" oninput="setConsent(\''+item.id+'\','+ci+',\'name\',this.value)" style="flex:2;min-width:130px">'+
+            '<select class="resp-sel" onchange="setConsent(\''+item.id+'\','+ci+',\'defType\',this.value)" style="flex:1;min-width:80px">'+
+              '<option value="doc"'+(cf.defType==='doc'?' selected':'')+'>Doc</option>'+
+              '<option value="sign"'+(cf.defType==='sign'?' selected':'')+'>Sign</option>'+
+            '</select>'+
+          '</div>'+
+          '<input class="resp-inp" placeholder="Doctor name..." value="'+(cf.resp||'')+'" oninput="setConsent(\''+item.id+'\','+ci+',\'resp\',this.value)" style="width:100%">'+
+        '</div>';
+    });
+    return '<div class="cl-bot">'+
+      '<div class="resp-row"><span class="resp-lbl">Responsible</span><span style="font-size:11px;color:var(--t3)">Add each form separately</span></div>'+
+      '<div id="cons-wrap-'+item.id+'">'+formsHtml+'</div>'+
+      '<button class="add-cons" onclick="addConsent(\''+item.id+'\')">&#xFF0B; Add consent form</button>'+
+    '</div>';
+  }
+
+  // FREE TEXT (Discharge Waiver etc)
+  if(item.resp==='custom_free'){
+    return '<div class="cl-bot">'+
+      '<div class="resp-row">'+
+        '<span class="resp-lbl">Responsible</span>'+
+        '<input class="resp-inp" placeholder="Name..." value="'+(s.resp||'')+'" oninput="setResp(\''+item.id+'\',this.value)" style="flex:1">'+
+      '</div>'+
+      '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
+    '</div>';
+  }
+
+  // MULTIDISCIPLINARY — Physician / Nurse / Both
+  if(item.resp==='phys_nurse'){
+    if(!s.resp&&mrpDoc)states[item.id].resp=mrpDoc;
+    const allDocsPH=[mrpDoc?mrpDoc:''].concat(staff.docs.filter(function(d){return d.name!==mrpDoc}).map(function(d){return d.name})).filter(Boolean);
+    const curResp=s.resp||mrpDoc||'';
+    const isBoth=curResp.indexOf(' / ')>=0;
+    const isNurseOnly=!isBoth&&staff.nurses.some(function(n){return n.name===curResp});
+    const pnType=isBoth?'both':isNurseOnly?'nurse':(curResp?'phys':'');
+    const curDoc=isBoth?curResp.split(' / ')[0]:(!isNurseOnly?curResp:'');
+    const curNur=isBoth?curResp.split(' / ')[1]:(isNurseOnly?curResp:'');
+
+    let dOptsPH='<option value="">-- Doctor --</option>';
+    allDocsPH.forEach(function(n){
+      dOptsPH+='<option value="'+n+'"'+(curDoc===n?' selected':'')+'>'+(n===mrpDoc?n+' (MRP)':n)+'</option>';
+    });
+    let nurOptsPH='<option value="">-- Nurse --</option>';
+    staff.nurses.forEach(function(n){
+      nurOptsPH+='<option value="'+n.name+'"'+(curNur===n.name?' selected':'')+'>'+(n.name)+'</option>';
+    });
+
+    return '<div class="cl-bot">'+
+      '<div class="resp-row">'+
+        '<span class="resp-lbl">Responsible</span>'+
+        '<select class="resp-sel" id="pn-type-'+item.id+'" onchange="setPNType(\''+item.id+'\',this.value)">'+
+          '<option value="phys"'+((!pnType||pnType==='phys')?' selected':'')+'>Physician</option>'+
+          '<option value="nurse"'+(pnType==='nurse'?' selected':'')+'>Nurse</option>'+
+          '<option value="both"'+(pnType==='both'?' selected':'')+'>Both</option>'+
+        '</select>'+
+      '</div>'+
+      '<div id="pn-phys-wrap-'+item.id+'"  style="display:'+(pnType!=='nurse'?'flex':'none')+';flex-direction:column;gap:5px">'+
+        '<select class="resp-sel" id="pn-doc-'+item.id+'" onchange="setPNDoc(\''+item.id+'\',this.value)">'+dOptsPH+'</select>'+
+        '<div style="display:flex;gap:5px;align-items:center">'+
+          '<input class="resp-inp" id="pn-doc-new-'+item.id+'" placeholder="Add new doctor..." style="flex:1;font-size:11px;padding:4px 8px">'+
+          '<button onclick="saveNewDoc(\''+item.id+'\')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap">+ Add</button>'+
+        '</div>'+
+      '</div>'+
+      '<div id="pn-nurse-wrap-'+item.id+'" style="display:'+(pnType==='nurse'||pnType==='both'?'flex':'none')+';flex-direction:column;gap:5px">'+
+        '<select class="resp-sel" id="pn-nur-'+item.id+'" onchange="setPNNurseSel(\''+item.id+'\',this.value)">'+nurOptsPH+'</select>'+
+        '<div style="display:flex;gap:5px;align-items:center">'+
+          '<input class="resp-inp" id="pn-nur-new-'+item.id+'" placeholder="Add new nurse..." style="flex:1;font-size:11px;padding:4px 8px">'+
+          '<button onclick="saveNewNurse(\''+item.id+'\')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap">+ Add</button>'+
+        '</div>'+
+      '</div>'+
+      '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
+    '</div>';
+  }
+
+  // FIXED RESP
+  if(item.resp.startsWith('fixed:')){
+    const fv=item.resp.replace('fixed:','');
+    if(!s.resp)states[item.id].resp=fv;
+    return '<div class="cl-bot">'+
+      '<div class="resp-row"><span class="resp-lbl">Responsible</span><span class="resp-fixed">'+fv+'</span></div>'+
+      '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
+    '</div>';
+  }
+
+  // PHYSICIAN dropdown (phys)
+  if(item.resp==='phys'){
+    if(!s.resp&&mrpDoc)states[item.id].resp=mrpDoc;
+    const allDocsPhy=[mrpDoc?mrpDoc:''].concat(staff.docs.filter(function(d){return d.name!==mrpDoc}).map(function(d){return d.name})).filter(Boolean);
+    const curP=s.resp||mrpDoc||'';
+    let dOptsPhy='<option value="">-- Select --</option>';
+    allDocsPhy.forEach(function(n){
+      dOptsPhy+='<option value="'+n+'"'+(curP===n?' selected':'')+'>'+(n===mrpDoc?n+' (MRP)':n)+'</option>';
+    });
+    dOptsPhy+='<option value="N/A"'+(curP==='N/A'?' selected':'')+'>N/A</option>';
+    dOptsPhy+='<option value="Anesthesia"'+(curP==='Anesthesia'?' selected':'')+'>Anesthesia</option>';
+    dOptsPhy+='<option value="OR Nurse"'+(curP==='OR Nurse'?' selected':'')+'>OR Nurse</option>';
+    return '<div class="cl-bot">'+
+      '<div class="resp-row">'+
+        '<span class="resp-lbl">Responsible</span>'+
+        '<select class="resp-sel" onchange="setResp(\''+item.id+'\',this.value)">'+dOptsPhy+'</select>'+
+      '</div>'+
+      '<div style="display:flex;gap:5px;align-items:center;margin-top:2px">'+
+        '<input class="resp-inp" id="new-doc-inline-'+item.id+'" placeholder="Add new doctor..." style="flex:1;font-size:11px;padding:4px 8px">'+
+        '<button onclick="saveNewDocInline(\''+item.id+'\')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap">+ Add</button>'+
+      '</div>'+
+      '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
+    '</div>';
+  }
+
+  // NURSE — free text
+  if(item.resp==='nurse'){
+    return '<div class="cl-bot">'+
+      '<div class="resp-row">'+
+        '<span class="resp-lbl">Responsible</span>'+
+        '<input class="resp-inp" placeholder="Nurse name..." value="'+(s.resp||'')+'" oninput="setResp(\''+item.id+'\',this.value)" style="flex:1">'+
+      '</div>'+
+      '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
+    '</div>';
+  }
+
+  // SW / DT / other
+  if(!s.resp)states[item.id].resp=item.resp;
+  return '<div class="cl-bot">'+
+    '<div class="resp-row"><span class="resp-lbl">Responsible</span><span class="resp-fixed">'+(item.resp||'')+'</span></div>'+
+    '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
+  '</div>';
 }
 
 function setSt(id,st){
@@ -1421,82 +1482,6 @@ function setSt(id,st){
   renderCL(getCL(ctx.type));updateProg();
 }
 function setResp(id,v){states[id].resp=v}
-function setPNType(id,type){
-  const phys=document.getElementById('pn-phys-'+id);
-  const nur=document.getElementById('pn-nurse-'+id);
-  if(type==='phys'){phys.style.display='flex';nur.style.display='none';}
-  else if(type==='nurse'){phys.style.display='none';nur.style.display='flex';}
-  else if(type==='both'){phys.style.display='flex';nur.style.display='flex';}
-  else{phys.style.display='none';nur.style.display='none';}
-  // Update resp value
-  const docSel=document.getElementById('pn-doc-'+id);
-  const nurInp=document.getElementById('pn-nur-'+id);
-  if(type==='phys'&&docSel)states[id].resp=docSel.value||'Physician';
-  else if(type==='nurse'&&nurInp)states[id].resp='Nurse: '+(nurInp.value||'');
-  else if(type==='both'&&docSel&&nurInp)states[id].resp=(docSel.value||'Physician')+' / '+(nurInp.value||'Nurse');
-  else states[id].resp='';
-}
-function setPNDoc(id,val){
-  states[id].resp=val;
-  const type=document.getElementById('pn-type-'+id)?.value;
-  const nurInp=document.getElementById('pn-nur-'+id);
-  if(type==='both'&&nurInp)states[id].resp=val+' / '+(nurInp.value||'Nurse');
-}
-function setPNNurse(id,val){
-  const type=document.getElementById('pn-type-'+id)?.value;
-  const docSel=document.getElementById('pn-doc-'+id);
-  if(type==='nurse')states[id].resp='Nurse: '+val;
-  else if(type==='both')states[id].resp=(docSel?.value||'Physician')+' / '+val;
-}
-function setPNNurseSel(id,val){
-  states[id].resp=val;
-  const type=document.getElementById('pn-type-'+id)?.value;
-  const docSel=document.getElementById('pn-doc-'+id);
-  if(type==='both')states[id].resp=(docSel?.value||'Physician')+' / '+val;
-}
-function saveNewDoc(id){
-  const inp=document.getElementById('pn-doc-new-'+id);
-  if(!inp)return;
-  const name=inp.value.trim();
-  if(!name){toast('Enter doctor name','warn');return;}
-  if(staff.docs.find(d=>d.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
-  staff.docs.push({name,id:Date.now().toString()});
-  localStorage.setItem('staff',JSON.stringify(staff));
-  inp.value='';
-  renderStaff();
-  // Set as selected resp
-  states[id].resp=name;
-  renderCL(getCL(ctx.type));
-  toast(name+' saved','ok');
-}
-function saveNewNurse(id){
-  const inp=document.getElementById('pn-nur-new-'+id);
-  if(!inp)return;
-  const name=inp.value.trim();
-  if(!name){toast('Enter nurse name','warn');return;}
-  if(staff.nurses.find(n=>n.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
-  staff.nurses.push({name,id:Date.now().toString()});
-  localStorage.setItem('staff',JSON.stringify(staff));
-  inp.value='';
-  renderStaff();
-  states[id].resp=name;
-  renderCL(getCL(ctx.type));
-  toast(name+' saved','ok');
-}
-function saveNewDocInline(id){
-  const inp=document.getElementById('new-doc-inline-'+id);
-  if(!inp)return;
-  const name=inp.value.trim();
-  if(!name){toast('Enter doctor name','warn');return;}
-  if(staff.docs.find(d=>d.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
-  staff.docs.push({name,id:Date.now().toString()});
-  localStorage.setItem('staff',JSON.stringify(staff));
-  inp.value='';
-  renderStaff();
-  states[id].resp=name;
-  renderCL(getCL(ctx.type));
-  toast(name+' saved','ok');
-}
 function setNotes(id,v){states[id].notes=v}
 function addConsent(id){
   if(!states[id].consents)states[id].consents=[];
@@ -1765,6 +1750,88 @@ function newFile(){
 // ═══════════════════════════════════
 // INIT
 // ═══════════════════════════════════
+
+function setPNType(id,type){
+  const phWrap=document.getElementById('pn-phys-wrap-'+id);
+  const nWrap=document.getElementById('pn-nurse-wrap-'+id);
+  if(phWrap)phWrap.style.display=(type==='phys'||type==='both')?'flex':'none';
+  if(nWrap)nWrap.style.display=(type==='nurse'||type==='both')?'flex':'none';
+  updatePNResp(id,type);
+}
+function updatePNResp(id,type){
+  const docSel=document.getElementById('pn-doc-'+id);
+  const nurSel=document.getElementById('pn-nur-'+id);
+  const dv=docSel?docSel.value:'';
+  const nv=nurSel?nurSel.value:'';
+  if(type==='phys')states[id].resp=dv||ctx.doc||'Physician';
+  else if(type==='nurse')states[id].resp=nv||'Nurse';
+  else if(type==='both')states[id].resp=(dv||ctx.doc||'Physician')+' / '+(nv||'Nurse');
+}
+function setPNDoc(id,val){
+  states[id].resp=val;
+  const type=document.getElementById('pn-type-'+id)?.value;
+  const nurSel=document.getElementById('pn-nur-'+id);
+  if(type==='both')states[id].resp=val+' / '+(nurSel?.value||'Nurse');
+}
+function setPNNurseSel(id,val){
+  const type=document.getElementById('pn-type-'+id)?.value;
+  const docSel=document.getElementById('pn-doc-'+id);
+  if(type==='both')states[id].resp=(docSel?.value||ctx.doc||'Physician')+' / '+val;
+  else states[id].resp=val;
+}
+function saveNewDoc(id){
+  const inp=document.getElementById('pn-doc-new-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter doctor name','warn');return;}
+  if(staff.docs.find(d=>d.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.docs.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' added','ok');
+}
+function saveNewNurse(id){
+  const inp=document.getElementById('pn-nur-new-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter nurse name','warn');return;}
+  if(staff.nurses.find(n=>n.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.nurses.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' added','ok');
+}
+function saveNewDocInline(id){
+  const inp=document.getElementById('new-doc-inline-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter doctor name','warn');return;}
+  if(staff.docs.find(d=>d.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.docs.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' added','ok');
+}
+function setNurseSel(id,val){states[id].resp=val;}
+function saveNurseInline(id){
+  const inp=document.getElementById('nurse-new-'+id);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name){toast('Enter nurse name','warn');return;}
+  if(staff.nurses.find(n=>n.name.toLowerCase()===name.toLowerCase())){toast('Already exists','warn');return;}
+  staff.nurses.push({name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' added','ok');
+}
 function init(){
   if(theme==='dark')document.documentElement.setAttribute('data-theme','dark');
   const ic=document.getElementById('theme-ic');
@@ -1776,4 +1843,38 @@ function init(){
 init();
 </script>
 </body>
-</html>
+</html>} else if(item.resp==='phys_nurse'){
+        const mrpDocPN=ctx.doc||'';
+        const allDocsPH=[...(mrpDocPN?[mrpDocPN]:[]),...staff.docs.filter(d=>d.name!==mrpDocPN).map(d=>d.name)];
+        const curRespPN=s.resp||mrpDocPN||'';
+        if(!s.resp&&mrpDocPN)states[item.id].resp=mrpDocPN;
+        const isNurseOnlyPN=!curRespPN.includes(' / ')&&staff.nurses.some(n=>n.name===curRespPN);
+        const isBothPN=curRespPN.includes(' / ');
+        const pnType=isBothPN?'both':isNurseOnlyPN?'nurse':(curRespPN?'phys':'');
+        const dOptsPH=allDocsPH.map(n=>'<option value="'+n+'" '+(curRespPN===n?'selected':'')+'>'+(n===mrpDocPN?n+' (MRP)':n)+'</option>').join('');
+        const nurOptsPH=staff.nurses.map(n=>'<option value="'+n.name+'" '+(curRespPN===n.name?'selected':'')+'>'+n.name+'</option>').join('');
+        respHtml='<div style="display:flex;flex-direction:column;gap:6px;flex:1">'
+          +'<select class="resp-sel" id="pn-type-'+item.id+'" onchange="setPNType(''+item.id+'',this.value)">'
+          +'<option value="">-- Who is responsible? --</option>'
+          +'<option value="phys" '+(pnType==='phys'||!pnType?'selected':'')+'>Physician</option>'
+          +'<option value="nurse" '+(pnType==='nurse'?'selected':'')+'>Nurse</option>'
+          +'<option value="both" '+(pnType==='both'?'selected':'')+'>Both (Physician + Nurse)</option>'
+          +'</select>'
+          +'<div id="pn-phys-wrap-'+item.id+'" style="display:'+(pnType!=='nurse'?'flex':'none')+';flex-direction:column;gap:5px">'
+          +'<select class="resp-sel" id="pn-doc-'+item.id+'" onchange="setPNDoc(''+item.id+'',this.value)">'
+          +'<option value="">-- Select Doctor --</option>'
+          +dOptsPH
+          +'</select>'
+          +'<div style="display:flex;gap:5px;align-items:center">'
+          +'<input class="resp-inp" id="pn-doc-new-'+item.id+'" placeholder="Add new doctor..." style="flex:1;font-size:11px;padding:4px 8px">'
+          +'<button onclick="saveNewDoc(''+item.id+'')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap;flex-shrink:0">+ Add</button>'
+          +'</div></div>'
+          +'<div id="pn-nurse-wrap-'+item.id+'" style="display:'+(pnType==='nurse'||pnType==='both'?'flex':'none')+';flex-direction:column;gap:5px">'
+          +'<select class="resp-sel" id="pn-nur-'+item.id+'" onchange="setPNNurseSel(''+item.id+'',this.value)">'
+          +'<option value="">-- Select Nurse --</option>'
+          +nurOptsPH
+          +'</select>'
+          +'<div style="display:flex;gap:5px;align-items:center">'
+          +'<input class="resp-inp" id="pn-nur-new-'+item.id+'" placeholder="Add new nurse..." style="flex:1;font-size:11px;padding:4px 8px">'
+          +'<button onclick="saveNewNurse(''+item.id+'')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap;flex-shrink:0">+ Add</button>'
+          +'</div></div></div>';
