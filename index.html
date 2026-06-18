@@ -293,8 +293,8 @@ body.ar .spec-tbl th{text-align:right}
 
 /* Settings checklist editor */
 .cl-editor{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
-.cle-hd{display:grid;grid-template-columns:1fr 80px 120px 100px 100px 36px;gap:8px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
-.cle-row{display:grid;grid-template-columns:1fr 80px 120px 100px 100px 36px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
+.cle-hd{display:grid;grid-template-columns:1.4fr 60px 120px 150px 90px 30px;gap:8px;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font:700 9px/1 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--t3)}
+.cle-row{display:grid;grid-template-columns:1.4fr 60px 120px 150px 90px 30px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
 .cle-row:last-child{border-bottom:none}
 .cle-name{font-weight:500;color:var(--t1);font-size:12px}
 .cle-sel{border:1.5px solid var(--border);border-radius:5px;padding:4px 6px;font:11px/1 inherit;color:var(--t1);background:var(--surface);outline:none;width:100%}
@@ -1697,7 +1697,19 @@ function renderCLEditor(){
         '<option value="csection"'+(item.cond==='csection'?' selected':'')+'>C-Section</option>'+
         '<option value="transfer_ward"'+(item.cond==='transfer_ward'?' selected':'')+'>Transfer to ward</option>'+
       '</select>'+
-      '<input class="cle-sel" data-id="'+item.id+'" data-field="resp" value="'+item.resp+'" placeholder="resp" style="font-size:11px">'+
+      '<select class="cle-sel" data-id="'+item.id+'" data-field="resp" style="font-size:11px">'+
+        '<option value="phys"'+(item.resp==='phys'?' selected':'')+'>Physician</option>'+
+        '<option value="nurse"'+(item.resp==='nurse'?' selected':'')+'>Nurse</option>'+
+        '<option value="phys_nurse"'+(item.resp==='phys_nurse'?' selected':'')+'>Physician/Nurse/Both</option>'+
+        '<option value="custom"'+(item.resp==='custom'?' selected':'')+'>Consents (multi-form)</option>'+
+        '<option value="custom_free"'+(item.resp==='custom_free'?' selected':'')+'>Free text</option>'+
+        '<option value="fixed:N/A"'+(item.resp==='fixed:N/A'?' selected':'')+'>N/A (auto)</option>'+
+        '<option value="fixed:SW"'+(item.resp==='fixed:SW'?' selected':'')+'>SW (Social Worker)</option>'+
+        '<option value="fixed:DT"'+(item.resp==='fixed:DT'?' selected':'')+'>DT (Dietitian)</option>'+
+        '<option value="fixed:Anesthesia"'+(item.resp==='fixed:Anesthesia'?' selected':'')+'>Anesthesia</option>'+
+        '<option value="fixed:OR Nurse"'+(item.resp==='fixed:OR Nurse'?' selected':'')+'>OR Nurse</option>'+
+        '<option value="fixed:SW + Physician"'+(item.resp==='fixed:SW + Physician'?' selected':'')+'>SW + Physician</option>'+
+      '</select>'+
       '<select class="cle-sel" data-id="'+item.id+'" data-field="verify">'+
         '<option value=""'+((!item.verify)?' selected':'')+'>No</option>'+
         '<option value="true"'+((item.verify)?' selected':'')+'>Yes (verify)</option>'+
