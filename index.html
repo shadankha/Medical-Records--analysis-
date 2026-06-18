@@ -1609,7 +1609,7 @@ async function saveSheets(){
   btn.disabled=true;
   btn.innerHTML=`<div class="spin"></div> Saving...`;
   try{
-    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbwAWbFZYIywaLHa6N2y2ZOKcmBjtKnmMQXb2eNycnurqIktJfMW48mkzHFTNzQwx9SPng/exec';
+    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbxRVzSxI7O72E-NyAMB6zFEtRf0pQy6XLtlyxHCcvgkRpd_fYfO5Rx4k8ZpUYVodCC-KQ/exec';
     const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
     const data=await res.json();
     if(data.success){
