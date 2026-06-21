@@ -183,6 +183,8 @@ body.ar .cl-sh-cnt{margin-left:0;margin-right:auto}
 .cl-row:last-child{border-bottom:none}
 .cl-row:hover{background:var(--surface2)}
 .cl-row.s-ok{background:rgba(10,122,79,.03)}
+.cl-row.xl-complete{background:rgba(16,185,99,.10)!important;border-left:0}
+.cl-row.xl-complete .stripe{background:var(--ok)!important}
 .cl-row.s-doc{background:rgba(185,28,28,.04)}
 .cl-row.s-sign{background:rgba(180,83,9,.04)}
 .cl-row.s-na{background:var(--na-bg);opacity:.6}
@@ -199,6 +201,9 @@ body.ar .stripe{order:99}
 
 /* E·verify — color only, no border text badge */
 .cl-row.ev-row{background:rgba(194,65,12,.03)}
+.cl-row.need-resp{background:rgba(185,28,28,.05)}
+.cl-row.need-resp .resp-row::before{content:'⚠ مسؤول مطلوب';font:700 9px/1 inherit;color:var(--doc-t);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+[lang=en] .cl-row.need-resp .resp-row::before{content:'⚠ Responsible required'}
 [data-theme=dark] .cl-row.ev-row{background:rgba(194,65,12,.07)}
 .cl-row.ev-row .tbadge-e{background:var(--ev-bg);color:var(--ev-t)}
 
@@ -515,6 +520,7 @@ body.ar .toasts{right:auto;left:18px}
       <div class="lg-item"><span class="tbadge tbadge-p">P</span> <span class="tr" data-k="p_paper">Paper — physical file</span></div>
       <div class="lg-item" style="padding:3px 8px;border-radius:3px;background:rgba(239,68,68,.06);border-left:3px solid #EF4444;font-size:11px;color:var(--doc)"><span class="tr" data-k="key_mand">Mandatory item</span></div>
     </div>
+    <div id="xl-summary" style="display:none;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;font-size:12px;color:var(--t2)"></div>
     <div id="cl-content"></div>
     <div style="display:flex;gap:7px;margin-top:14px">
       <button class="btn btn-p" style="flex:1;justify-content:center" onclick="tryReport()"><span class="tr" data-k="view_report">View Report</span> <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
@@ -701,7 +707,9 @@ let specs=JSON.parse(localStorage.getItem('specs')||'null')||[
   {name:'Endoscopy',type:'Endoscopy'},{name:'ESWL',type:'ESWL'}
 ];
 let patients=[];
+let xlRows=[];
 let ctx={};
+let consentForms=JSON.parse(localStorage.getItem('consentForms')||'null')||['General Consent','Surgery Consent','Anesthesia Consent','Blood Transfusion Consent','High Risk Consent','Procedure Consent'];
 let states={};// id→{status,resp,notes,consents:[{name,defType,resp}]}
 let clEdits={};// overrides for checklist items per type
 
@@ -1126,13 +1134,36 @@ function processXL(file){
       const wb=XLSX.read(e.target.result,{type:'binary'});
       const ws=wb.Sheets[wb.SheetNames[0]];
       const data=XLSX.utils.sheet_to_json(ws,{defval:''});
-      patients=data.map(row=>{
-        const mrn=String(row.MRN||row.FILE_NO||row['File Number']||'').trim();
-        const dept=String(row.PAT_LOCATION||row.DEPARTMENT||row.Department||'').trim();
-        let dc=row.DISCHRAGE_DATE||row.DISCHARGE_DATE||row['Discharge Date']||'';
-        if(typeof dc==='number'){const d=new Date((dc-25569)*86400*1000);dc=d.toISOString().split('T')[0];}
-        return{mrn,dept,dc,raw:row,done:false};
-      }).filter(p=>p.mrn);
+      // Store all rows for form-status lookup
+      // Detect column names flexibly from the actual headers
+      var hdrs=data.length?Object.keys(data[0]):[];
+      function findCol(patterns){
+        for(var i=0;i<hdrs.length;i++){
+          var h=hdrs[i].toLowerCase().replace(/[^a-z]/g,'');
+          for(var j=0;j<patterns.length;j++){
+            if(h.indexOf(patterns[j])>=0)return hdrs[i];
+          }
+        }
+        return null;
+      }
+      var colFile=findCol(['file']);
+      var colSheet=findCol(['sheetname','sheet','name','form','document']);
+      var colStatus=findCol(['status','state']);
+      var colUser=findCol(['user','verified']);
+      // sheet column must not be the same as status
+      if(colSheet===colStatus)colSheet=findCol(['sheetname','name','form']);
+      xlRows=data.map(function(row){return{
+        file:String(row[colFile]||'').trim(),
+        sheet:String(row[colSheet]||'').trim(),
+        status:String(row[colStatus]||'').trim(),
+        user:String(row[colUser]||'').trim()
+      };}).filter(function(r){return r.file&&r.sheet;});
+      // Build unique patient list with their department guessed from user/forms
+      const fileMap={};
+      xlRows.forEach(r=>{
+        if(!fileMap[r.file])fileMap[r.file]={mrn:r.file,dept:'',dc:'',raw:{},done:false};
+      });
+      patients=Object.values(fileMap);
       renderPtList();
       document.getElementById('ptl-wrap').classList.remove('hidden');
       toast(`Loaded ${patients.length} patients`,'info');
@@ -1141,22 +1172,25 @@ function processXL(file){
   r.readAsBinaryString(file);
 }
 function renderPtList(){
-  document.getElementById('pt-cnt').textContent=`${patients.length} patients`;
-  document.getElementById('pt-rows').innerHTML=patients.map((p,i)=>`
-    <div class="pt-row${p.done?' done':''}" onclick="selPt(${i})">
-      <span class="pt-fn">${p.mrn}</span>
-      <span style="color:var(--t3);font-size:12px">${p.dc||'—'}</span>
-      <span style="color:var(--t2);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.dept||'—'}</span>
-      <span class="badge ${p.done?'b-done':'b-pend'}">${p.done?'Done':'Pending'}</span>
-    </div>`).join('');
+  document.getElementById('pt-cnt').textContent=patients.length+' files';
+  // count forms per file
+  const formCount={};
+  xlRows.forEach(r=>{ formCount[r.file]=(formCount[r.file]||0)+1; });
+  document.getElementById('pt-rows').innerHTML=patients.map((p,i)=>
+    '<div class="pt-row'+(p.done?' done':'')+'" onclick="selPt('+i+')">'+
+      '<span class="pt-fn">'+p.mrn+'</span>'+
+      '<span style="color:var(--t3);font-size:12px">'+(p.dc||'—')+'</span>'+
+      '<span style="color:var(--t2);font-size:11px">'+(formCount[p.mrn]||0)+' forms</span>'+
+      '<span class="badge '+(p.done?'b-done':'b-pend')+'">'+(p.done?'Done':'Pending')+'</span>'+
+    '</div>').join('');
 }
 function selPt(i){
   const p=patients[i];
   document.getElementById('f-num').value=p.mrn;
   if(p.dc)document.getElementById('f-date').value=p.dc;
-  autoType(p.dept);
   valSetup();nav('analysis');
-  toast(`File ${p.mrn} selected`,'info');
+  toast('File '+p.mrn+' selected — choose list type',
+    'info');
 }
 function autoType(dept){
   const d=(dept||'').toLowerCase();
@@ -1203,9 +1237,26 @@ function valSetup(){
 }
 ['f-num','f-type'].forEach(id=>document.getElementById(id)?.addEventListener('input',valSetup));
 
-function startAnalysis(){
+async function startAnalysis(){
   const tp=document.getElementById('f-type').value;
   if(!tp)return;
+  const fnVal=document.getElementById('f-num').value.trim();
+  const dateVal=document.getElementById('f-date').value;
+  const analystVal=document.getElementById('f-analyst').value.trim();
+  // Check if file is locked by someone else
+  const url=localStorage.getItem('scriptUrl')||'';
+  if(url&&analystVal){
+    try{
+      const res=await fetch(url,{method:'POST',body:JSON.stringify({action:'checkLock',fileNum:fnVal,dischargeDate:dateVal,analyst:analystVal})});
+      const lock=await res.json();
+      if(lock.locked){
+        if(!confirm('⚠️ This file is currently being analyzed by: '+lock.lockedBy+' ('+lock.minutesAgo+' min ago).\n\nContinue anyway? This may overwrite their work.'))return;
+      } else {
+        // acquire lock
+        fetch(url,{method:'POST',body:JSON.stringify({action:'acquireLock',fileNum:fnVal,dischargeDate:dateVal,analyst:analystVal})});
+      }
+    }catch(e){}
+  }
   ctx={
     fn:document.getElementById('f-num').value.trim(),
     type:tp,spec:document.getElementById('f-spec').value,
@@ -1225,8 +1276,14 @@ function startAnalysis(){
     states[item.id]={status:defNA?'na':null,resp:'',notes:'',fromXL:false,consents:[]};
   });
   // Prefill from Excel
-  const pt=patients.find(p=>p.mrn===ctx.fn);
-  if(pt)prefillXL(pt,items);
+  if(xlRows.length){
+    const dbg=prefillXLDebug(ctx.fn,items);
+    const matched=dbg.matched;
+    window._xlDebug=dbg;
+    setTimeout(function(){showXLSummary(dbg,items);},100);
+    if(matched>0)setTimeout(function(){toast(matched+' items auto-filled from Excel ✓','ok');},300);
+    else setTimeout(function(){toast('No Excel matches! Forms in file: '+dbg.formCount,'warn');},300);
+  }
   // Sidebar
   document.getElementById('sb-fn').textContent=ctx.fn;
   document.getElementById('sb-type').textContent=ctx.type;
@@ -1239,17 +1296,223 @@ function startAnalysis(){
   document.getElementById('cl-wrap').classList.remove('hidden');
   updateProg();
 }
-function prefillXL(pt,items){
-  const raw=pt.raw;
-  items.forEach(item=>{
-    const keys=Object.keys(raw);
-    const slug=item.name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10);
-    const mk=keys.find(k=>k.toLowerCase().replace(/[^a-z0-9]/g,'').startsWith(slug));
-    if(mk){
-      const v=String(raw[mk]).trim().toUpperCase();
-      if(v==='YES'||v==='Y'||v==='1'){states[item.id].status='ok';states[item.id].fromXL=true;}
+
+// ═══════════════════════════════════
+// EXCEL → CHECKLIST MATCHING
+// Maps normalized Excel "Sheet Name" → checklist item keywords
+// ═══════════════════════════════════
+const EXCEL_MAP = {
+  'nicu admission criteria':['criteria for admission'],
+  'nicu discharge criteria':['criteria for discharge'],
+  'nicu physician initial admission assessment':['nicu physician initial'],
+  'icu admission criteria':['criteria for admission'],
+  'icu discharge criteria':['criteria for discharge'],
+  'icu physician initial admission assessment':['icu patient initial'],
+  'physician care plan':['physician care plan'],
+  'physician order form':["doctor's orders","doctors orders"],
+  'physician handover (sbar)':['physician shift hand over'],
+  'physician transfer summary':['transfer summary'],
+  'ob/gyne physician initial admission assessment':['patient initial assessment'],
+  'pediatric physician initial admission assessment':['pediatric department patient'],
+  'medical department physician initial admission assessment':['patient initial assessment'],
+  'surgical department physician initial admission assessment':['patient initial assessment'],
+  'maternity record physician initial admission assessment':['patient initial assessment'],
+  'delivery room admission and discharge criteria':['delivery room admission','delivery room discharge'],
+  'interdisciplinary plan of care':['interdisciplinary plan'],
+  'patient and family education sheet (pfe)':['patient & family education','patient and family education'],
+  'medications table':['medication reconciliation'],
+  'nutrition risk screening':['nutritional risk screening','nutritional ('],
+  'nutrition assessment (adult & pedia)':['nutritional care process','nutritional ('],
+  'nutrition reassessment (adult & pedia)':['nutritional care process'],
+  'pain flow sheet':['pain assessment'],
+  'nursing care plan (ncp)':['nursing care plan'],
+  'nurses notes':['nurses progress notes'],
+  'nursing handover (sbar)':['nurses sbar endorsement'],
+  'nursing reassessment (inpatient)':['nursing reassessment'],
+  'nursing reassessment (icu)':['nursing reassessment'],
+  'nursing reassessment (ob-gyne)':['nursing reassessment'],
+  'nursery reassessment form':['nursing reassessment'],
+  'initial nursing admission assessment':['initial nursing assessment (opd'],
+  'initial nursing admission assessment - nicu':['initial nursing assessment (nicu'],
+  'initial nursing admission assessment - nursery':['initial nursing assessment (nicu'],
+  'initial nursing assessment - adult':['initial nursing assessment (opd'],
+  'initial nursing assessment er - adult':['initial nursing assessment (opd'],
+  'initial nursing assessment er - ob/gyn':['initial nursing assessment (opd'],
+  'initial nursing assessment er - pediatric':['pediatric nursing initial'],
+  'initial nursing assessment op - pediatric':['pediatric nursing initial'],
+  'braden scale for predicting pressure risk (from 5 years & above)':['braden'],
+  'braden q scale neonatal/infant':['braden'],
+  'modified braden q scale for pediatrics (age 1-5 years)':['braden'],
+  'fall risk assessment & intervention (adult)':['fall risk assessment'],
+  'fall risk assessment & intervention (pediatrics)':['fall risk assessment'],
+  'discharge checklist (nursing)':['discharge check list','patient orientation','nursery unit'],
+  'pressure injury assessment form':['injury assessment'],
+  'operation report':['operation record'],
+  'pre-operative anesthesia evaluation anesthesia':['pre-operative anesthesia'],
+  'pre- operative / pre-procedures nursing checklist':['pre/post operative checklist'],
+  'pacu ( post anesthesia care unit ) record - nursing (adult)':['pacu record - nursing'],
+  'pacu ( post anesthesia care unit ) record - nursing (pediatric)':['pacu record - nursing'],
+  'upper gastro-intestinal tract endoscopy report':['git endoscopy'],
+  'lower gastro-intestinal tract endoscopy report':['git endoscopy'],
+  'endoscopic retrograde cholangiopancreatography ercp report':['git endoscopy'],
+};
+
+// Items that must ALWAYS be verified manually in the system (never auto-judged from Excel)
+const VERIFY_MANUAL = ['discharge summary','progress notes','vte','consultation','order'];
+
+function normalizeXL(s){
+  return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
+}
+
+// Build form status map for a file from xlRows
+function getFileFormStatus(fileNum){
+  var result={};
+  xlRows.forEach(function(row){
+    if(String(row.file).trim()!==String(fileNum).trim())return;
+    var nm=normalizeXL(row.sheet);
+    var st=String(row.status||'').trim().toUpperCase();
+    var cur=result[nm];
+    if(!cur)result[nm]=st;
+    else if(st==='COMPLETE')result[nm]='COMPLETE';
+    else if(st==='DRAFT'&&cur!=='COMPLETE')result[nm]='DRAFT';
+  });
+  return result;
+}
+
+// Match a checklist item name against Excel forms
+function matchItemInExcel(itemName, formStatus){
+  var nm=itemName.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+  // Pass 1: EXCEL_MAP keyword matching
+  for(var xlName in formStatus){
+    var keywords=EXCEL_MAP[xlName];
+    if(keywords){
+      for(var i=0;i<keywords.length;i++){
+        var kw=keywords[i].toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+        if(nm.indexOf(kw)>=0)return formStatus[xlName];
+      }
+    }
+  }
+  // Pass 2: fuzzy — strict overlap of significant words
+  var itemWords=nm.split(' ').filter(function(w){return w.length>3;});
+  var best=null,bestScore=0;
+  for(var xl in formStatus){
+    var xlClean=xl.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+    var xlWords=xlClean.split(' ').filter(function(w){return w.length>3;});
+    if(itemWords.length===0||xlWords.length===0)continue;
+    var common=0;
+    itemWords.forEach(function(w){ if(xlWords.indexOf(w)>=0)common++; });
+    var ratio=common/Math.min(itemWords.length,xlWords.length);
+    // require strong overlap AND at least 3 shared meaningful words to avoid false matches
+    if(ratio>=0.7&&common>=3&&ratio>bestScore){ bestScore=ratio; best=formStatus[xl]; }
+  }
+  return best;
+}
+
+// Is this item manually verified in system?
+function isVerifyManual(item){
+  // These specific items are ALWAYS checked manually in the hospital system (orange).
+  // Everything else auto-fills from Excel.
+  var nm=item.name.toLowerCase();
+  return nm.indexOf('discharge summary')>=0||
+         nm.indexOf('progress notes')>=0||      // both Doctor's & Nurses progress notes
+         nm.indexOf('medication reconciliation')>=0||
+         nm.indexOf('consultation')>=0||
+         nm.indexOf('vte')>=0;
+}
+
+// Auto-set responsible after auto-fill
+function autoSetResp(item){
+  if(!item.resp)return;
+  if(item.resp.startsWith('fixed:')){
+    states[item.id].resp=item.resp.replace('fixed:','');
+  } else if(item.resp==='phys'){
+    states[item.id].resp=ctx.doc||'';
+  }
+  // Flag if responsible is still needed (not auto-resolvable)
+  var r=item.resp;
+  if(r==='nurse'||r==='phys_nurse'||r==='custom'){
+    states[item.id].needResp=true;
+  }
+}
+
+function prefillXLDebug(fileNum,items){
+  var formStatus=getFileFormStatus(fileNum);
+  var matched=prefillXL(fileNum,items);
+  return {matched:matched, formCount:Object.keys(formStatus).length, forms:formStatus};
+}
+function showXLSummary(dbg,items){
+  var ok=items.filter(function(i){return states[i.id].fromXL&&states[i.id].status==='ok';}).length;
+  var def=items.filter(function(i){return states[i.id].fromXL&&(states[i.id].status==='doc'||states[i.id].status==='sign');}).length;
+  var na=items.filter(function(i){return states[i.id].status==='na';}).length;
+  var el=document.getElementById('xl-summary');
+  if(el){
+    el.innerHTML='<strong>Excel:</strong> '+dbg.formCount+' forms in file · '+
+      '<span style="color:var(--ok)">✓ '+ok+' complete</span> · '+
+      '<span style="color:var(--doc)">⚠ '+def+' deficiency</span> · '+
+      '<span style="color:var(--t3)">N/A '+na+'</span>';
+    el.style.display='block';
+  }
+}
+function prefillXL(fileNum,items){
+  var formStatus=getFileFormStatus(fileNum);
+  var matched=0;
+
+  items.forEach(function(item){
+    // Skip manual-verify items — orange, leave for user
+    if(isVerifyManual(item)){ states[item.id].manualVerify=true; return; }
+
+    // Condition check first
+    var condNA=(item.cond==='always_na')||
+      (item.cond==='dama_only'&&ctx.dc!=='dama')||
+      (item.cond==='diab_unstable'&&ctx.diab!=='unstable')||
+      (item.cond==='csection'&&ctx.deliv!=='csection')||
+      (item.cond==='transfer_ward'&&ctx.transfer!=='yes');
+
+    var xlStatus=matchItemInExcel(item.name,formStatus);
+
+    if(xlStatus){
+      // Found in Excel — override even if always_na (present = real)
+      matched++;
+      states[item.id].fromXL=true;
+      if(xlStatus==='COMPLETE'){
+        states[item.id].status='ok';
+      } else if(xlStatus==='DRAFT'){
+        states[item.id].status='sign';
+        autoSetResp(item);
+      } else {
+        // UNCOMPLETE
+        states[item.id].status='doc';
+        autoSetResp(item);
+      }
+    } else if(condNA){
+      // Not in Excel + condition says N/A
+      states[item.id].status='na';
+      states[item.id].resp='N/A';
+    } else if(item.cond==='na_if_absent'){
+      // Not in Excel + na_if_absent = N/A (not a deficiency)
+      states[item.id].status='na';
+      states[item.id].resp='N/A';
+    } else if(item.type==='P'){
+      // Paper — leave for manual
+    } else {
+      // Electronic, required, not in Excel = Doc deficiency (NOT from Excel — it's missing)
+      states[item.id].status='doc';
+      states[item.id].fromXL=false;
+      states[item.id].missingXL=true;
+      autoSetResp(item);
     }
   });
+  return matched;
+}
+
+// Auto-set responsible based on rule (N/A auto, or leave for manual)
+function autoSetResp(item){
+  if(item.resp&&item.resp.startsWith('fixed:')){
+    states[item.id].resp=item.resp.replace('fixed:','');
+  } else if(item.resp==='phys'){
+    states[item.id].resp=ctx.doc||'';// MRP, user can change
+  }
+  // nurse/phys_nurse/custom → leave empty for manual (highlighted)
 }
 
 // ═══════════════════════════════════
@@ -1310,7 +1573,10 @@ function buildRow(item){
   const stCls=s.status==='ok'?'s-ok':s.status==='doc'?'s-doc':s.status==='sign'?'s-sign':s.status==='na'?'s-na':'';
   const isVerify=!!item.verify;
   const div=document.createElement('div');
-  div.className='cl-row'+(stCls?' '+stCls:'')+(item.key?' key-row':'')+(isVerify?' ev-row':'');
+  var needRespFlag=s.needResp&&!s.resp&&(s.status==='doc'||s.status==='sign');
+  var xlComplete=s.fromXL&&s.status==='ok';
+  var manualV=s.manualVerify||isVerify;
+  div.className='cl-row'+(stCls?' '+stCls:'')+(item.key?' key-row':'')+(manualV?' ev-row':'')+(needRespFlag?' need-resp':'')+(xlComplete?' xl-complete':'');
   div.id='row-'+item.id;
   const xlTag=s.fromXL?'<span style="font:700 9px/1 inherit;padding:1px 5px;border-radius:3px;background:var(--ok-bg);color:var(--ok-t)">Excel</span>':'';
   const typeBadge=item.type==='P'
@@ -1347,23 +1613,44 @@ function buildBottom(item,s){
   // CONSENTS — multi form
   if(item.resp==='custom'){
     const cForms=s.consents||[];
+    // Build consent form name options (saved list + defaults)
+    var formNameOpts='';
+    consentForms.forEach(function(fn){
+      formNameOpts+='<option value="'+fn+'">'+fn+'</option>';
+    });
     let formsHtml='';
     cForms.forEach(function(cf,ci){
+      var nameSelOpts='<option value="">-- Select form --</option>';
+      consentForms.forEach(function(fn){
+        nameSelOpts+='<option value="'+fn+'"'+(cf.name===fn?' selected':'')+'>'+fn+'</option>';
+      });
       formsHtml+=
         '<div class="cons-item">'+
           '<div class="cons-hd"><span class="cons-num">Form '+(ci+1)+'</span><button class="cons-rm" onclick="rmConsent(\''+item.id+'\','+ci+')">&#215;</button></div>'+
           '<div class="cons-row">'+
-            '<input class="resp-inp" placeholder="Form name e.g. Surgery Consent" value="'+(cf.name||'')+'" oninput="setConsent(\''+item.id+'\','+ci+',\'name\',this.value)" style="flex:2;min-width:130px">'+
-            '<select class="resp-sel" onchange="setConsent(\''+item.id+'\','+ci+',\'defType\',this.value)" style="flex:1;min-width:80px">'+
+            '<select class="resp-sel" onchange="setConsent(\''+item.id+'\','+ci+',\'name\',this.value)" style="flex:2;min-width:130px">'+nameSelOpts+'</select>'+
+            '<select class="resp-sel" onchange="setConsent(\''+item.id+'\','+ci+',\'defType\',this.value)" style="flex:1;min-width:75px">'+
               '<option value="doc"'+(cf.defType==='doc'?' selected':'')+'>Doc</option>'+
               '<option value="sign"'+(cf.defType==='sign'?' selected':'')+'>Sign</option>'+
             '</select>'+
           '</div>'+
-          '<input class="resp-inp" placeholder="Doctor name..." value="'+(cf.resp||'')+'" oninput="setConsent(\''+item.id+'\','+ci+',\'resp\',this.value)" style="width:100%">'+
+          '<div class="cons-row">'+
+            '<input class="resp-inp" id="cons-newname-'+item.id+'-'+ci+'" placeholder="Or type new form name..." style="flex:2;min-width:130px;font-size:11px">'+
+            '<button onclick="saveConsentName(\''+item.id+'\','+ci+')" style="padding:5px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap">+ Add</button>'+
+          '</div>'+
+          '<div class="cons-row">'+
+            '<select class="resp-sel" onchange="setConsent(\''+item.id+'\','+ci+',\'respType\',this.value)" style="flex:1;min-width:110px">'+
+              '<option value="">-- Responsible --</option>'+
+              '<option value="Physician"'+(cf.respType==='Physician'?' selected':'')+'>Physician</option>'+
+              '<option value="Nurse"'+(cf.respType==='Nurse'?' selected':'')+'>Nurse</option>'+
+              '<option value="Social Worker"'+(cf.respType==='Social Worker'?' selected':'')+'>Social Worker</option>'+
+            '</select>'+
+            '<input class="resp-inp" placeholder="Name..." value="'+(cf.respName||'')+'" oninput="setConsent(\''+item.id+'\','+ci+',\'respName\',this.value)" style="flex:1;min-width:110px">'+
+          '</div>'+
         '</div>';
     });
     return '<div class="cl-bot">'+
-      '<div class="resp-row"><span class="resp-lbl">Responsible</span><span style="font-size:11px;color:var(--t3)">Add each form separately</span></div>'+
+      '<div class="resp-row"><span class="resp-lbl">Responsible</span><span style="font-size:11px;color:var(--t3)">Add each consent form separately</span></div>'+
       '<div id="cons-wrap-'+item.id+'">'+formsHtml+'</div>'+
       '<button class="add-cons" onclick="addConsent(\''+item.id+'\')">&#xFF0B; Add consent form</button>'+
     '</div>';
@@ -1442,13 +1729,11 @@ function buildBottom(item,s){
     if(!s.resp&&mrpDoc)states[item.id].resp=mrpDoc;
     const allDocsPhy=[mrpDoc?mrpDoc:''].concat(staff.docs.filter(function(d){return d.name!==mrpDoc}).map(function(d){return d.name})).filter(Boolean);
     const curP=s.resp||mrpDoc||'';
-    let dOptsPhy='<option value="">-- Select --</option>';
+    let dOptsPhy='<option value="">-- Select Doctor --</option>';
     allDocsPhy.forEach(function(n){
       dOptsPhy+='<option value="'+n+'"'+(curP===n?' selected':'')+'>'+(n===mrpDoc?n+' (MRP)':n)+'</option>';
     });
     dOptsPhy+='<option value="N/A"'+(curP==='N/A'?' selected':'')+'>N/A</option>';
-    dOptsPhy+='<option value="Anesthesia"'+(curP==='Anesthesia'?' selected':'')+'>Anesthesia</option>';
-    dOptsPhy+='<option value="OR Nurse"'+(curP==='OR Nurse'?' selected':'')+'>OR Nurse</option>';
     return '<div class="cl-bot">'+
       '<div class="resp-row">'+
         '<span class="resp-lbl">Responsible</span>'+
@@ -1462,12 +1747,22 @@ function buildBottom(item,s){
     '</div>';
   }
 
-  // NURSE — free text
+  // NURSE — dropdown of nurses + add new
   if(item.resp==='nurse'){
+    var curN=s.resp||'';
+    var nOpts='<option value="">-- Select Nurse --</option>';
+    staff.nurses.forEach(function(n){
+      nOpts+='<option value="'+n.name+'"'+(curN===n.name?' selected':'')+'>'+n.name+'</option>';
+    });
+    nOpts+='<option value="N/A"'+(curN==='N/A'?' selected':'')+'>N/A</option>';
     return '<div class="cl-bot">'+
       '<div class="resp-row">'+
         '<span class="resp-lbl">Responsible</span>'+
-        '<input class="resp-inp" placeholder="Nurse name..." value="'+(s.resp||'')+'" oninput="setResp(\''+item.id+'\',this.value)" style="flex:1">'+
+        '<select class="resp-sel" onchange="setResp(\''+item.id+'\',this.value)">'+nOpts+'</select>'+
+      '</div>'+
+      '<div style="display:flex;gap:5px;align-items:center;margin-top:2px">'+
+        '<input class="resp-inp" id="new-nur-inline-'+item.id+'" placeholder="Add new nurse..." style="flex:1;font-size:11px;padding:4px 8px">'+
+        '<button onclick="saveNewNurseInline(\''+item.id+'\')" style="padding:4px 10px;border-radius:5px;background:var(--navy);color:#fff;border:none;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap">+ Add</button>'+
       '</div>'+
       '<textarea class="notes-inp" rows="1" placeholder="Notes..." oninput="setNotes(\''+item.id+'\',this.value)">'+(s.notes||'')+'</textarea>'+
     '</div>';
@@ -1493,6 +1788,20 @@ function setSt(id,st){
 }
 function setResp(id,v){states[id].resp=v}
 function setNotes(id,v){states[id].notes=v}
+function saveConsentName(id,ci){
+  var inp=document.getElementById('cons-newname-'+id+'-'+ci);
+  if(!inp)return;
+  var name=inp.value.trim();
+  if(!name){toast('Enter form name','warn');return;}
+  if(!consentForms.find(function(f){return f.toLowerCase()===name.toLowerCase();})){
+    consentForms.push(name);
+    localStorage.setItem('consentForms',JSON.stringify(consentForms));
+  }
+  if(!states[id].consents[ci])states[id].consents[ci]={};
+  states[id].consents[ci].name=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' added','ok');
+}
 function addConsent(id){
   if(!states[id].consents)states[id].consents=[];
   states[id].consents.push({name:'',defType:'doc',resp:''});
@@ -1506,6 +1815,13 @@ function setConsent(id,ci,field,val){
   if(!states[id].consents)states[id].consents=[];
   if(!states[id].consents[ci])states[id].consents[ci]={};
   states[id].consents[ci][field]=val;
+  // Combine respType + respName into resp
+  var cf=states[id].consents[ci];
+  if(field==='respType'||field==='respName'){
+    var t=cf.respType||'';
+    var n=cf.respName||'';
+    cf.resp=n?(t+': '+n):t;
+  }
 }
 
 function updateProg(){
@@ -1591,6 +1907,26 @@ function showReport(){
 async function saveSheets(){
   const btn=document.getElementById('save-btn');
   const items=getCL(ctx.type);
+  // Warn if any items still unreviewed
+  const unreviewed=items.filter(function(i){return states[i.id]&&!states[i.id].status;});
+  if(unreviewed.length>0){
+    if(!confirm('⚠️ '+unreviewed.length+' items are still not reviewed:\n'+
+      unreviewed.slice(0,5).map(function(i){return '• '+i.name;}).join('\n')+
+      (unreviewed.length>5?'\n...and '+(unreviewed.length-5)+' more':'')+
+      '\n\nSave anyway?'))return;
+  }
+  // Warn if a deficiency has no responsible
+  const noResp=items.filter(function(i){
+    var s=states[i.id];
+    if(!s||(s.status!=='doc'&&s.status!=='sign'))return false;
+    if(i.resp==='custom')return false;
+    return !s.resp||s.resp==='';
+  });
+  if(noResp.length>0){
+    if(!confirm('⚠️ '+noResp.length+' deficiencies have no responsible person assigned:\n'+
+      noResp.slice(0,5).map(function(i){return '• '+i.name;}).join('\n')+
+      '\n\nSave anyway?'))return;
+  }
   const allItems=items.map(i=>{
     const s=states[i.id];
     const st=s?.status==='ok'?'✓':s?.status==='doc'?'D':s?.status==='sign'?'S':'N';
@@ -1609,7 +1945,7 @@ async function saveSheets(){
   btn.disabled=true;
   btn.innerHTML=`<div class="spin"></div> Saving...`;
   try{
-    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbxRVzSxI7O72E-NyAMB6zFEtRf0pQy6XLtlyxHCcvgkRpd_fYfO5Rx4k8ZpUYVodCC-KQ/exec';
+    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbx48Z9XTFRyrr0HEZFt3JeTsp0TXHnUFV99Q7nw6A6TCYtSAe2zuEcYG21YNi-FMjqJ/exec';
     const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
     const data=await res.json();
     if(data.success){
@@ -1834,6 +2170,19 @@ function saveNewNurse(id){
   states[id].resp=name;
   renderCL(getCL(ctx.type));
   toast(name+' added','ok');
+}
+function saveNewNurseInline(id){
+  var inp=document.getElementById('new-nur-inline-'+id);
+  if(!inp)return;
+  var name=inp.value.trim();
+  if(!name){toast('Enter nurse name','warn');return;}
+  if(staff.nurses.find(function(n){return n.name.toLowerCase()===name.toLowerCase();})){toast('Already exists','warn');return;}
+  staff.nurses.push({name:name,id:Date.now().toString()});
+  localStorage.setItem('staff',JSON.stringify(staff));
+  inp.value='';renderStaff();
+  states[id].resp=name;
+  renderCL(getCL(ctx.type));
+  toast(name+' saved','ok');
 }
 function saveNewDocInline(id){
   const inp=document.getElementById('new-doc-inline-'+id);
