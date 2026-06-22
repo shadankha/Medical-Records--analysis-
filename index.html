@@ -508,7 +508,15 @@ body.ar .toasts{right:auto;left:18px}
         <div class="ph-title" id="cl-title" style="font-size:17px;margin-bottom:1px"></div>
         <div class="ph-sub" id="cl-sub"></div>
       </div>
-      <div style="display:flex;gap:7px">
+      <div style="display:flex;gap:7px;align-items:center">
+        <select id="change-type" onchange="changeListType(this.value)" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--r);font:600 12px/1 inherit;color:var(--navy);background:var(--surface);cursor:pointer">
+          <option value="">Change List Type...</option>
+          <option value="ICU">ICU</option><option value="Surgery">Surgery</option>
+          <option value="OBGYNE">OB/GYNE</option><option value="Pediatric">Pediatrics</option>
+          <option value="IM">Internal Medicine</option><option value="NICU">NICU</option>
+          <option value="Nursery">Nursery</option><option value="Endoscopy">Endoscopy</option>
+          <option value="ESWL">ESWL</option>
+        </select>
         <button class="btn btn-p" onclick="tryReport()"><span class="tr" data-k="view_report">View Report</span> <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
         <button class="btn btn-g" onclick="nav('home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg> <span class="tr" data-k="back">Back</span></button>
       </div>
@@ -1453,9 +1461,34 @@ function showXLSummary(dbg,items){
     el.style.display='block';
   }
 }
+function getDoctorFromExcel(fileNum){
+  // Find the user who filled Admission Assessment or Physician Care Plan
+  var docName='';
+  xlRows.forEach(function(row){
+    if(String(row.file).trim()!==String(fileNum).trim())return;
+    var nm=normalizeXL(row.sheet);
+    if((nm.indexOf('physician care plan')>=0||nm.indexOf('admission')>=0||nm.indexOf('initial admission')>=0)&&row.user){
+      if(!docName)docName=row.user.trim();
+    }
+  });
+  return docName;
+}
+
 function prefillXL(fileNum,items){
   var formStatus=getFileFormStatus(fileNum);
   var matched=0;
+  // Pull doctor name from Excel if MRP not set
+  if(!ctx.doc){
+    var xlDoc=getDoctorFromExcel(fileNum);
+    if(xlDoc){
+      ctx.doc=xlDoc;
+      // add to staff docs if not there
+      if(!staff.docs.find(function(d){return d.name===xlDoc;})){
+        staff.docs.push({name:xlDoc,id:Date.now().toString()});
+        localStorage.setItem('staff',JSON.stringify(staff));
+      }
+    }
+  }
 
   items.forEach(function(item){
     // Skip manual-verify items — orange, leave for user
@@ -1776,6 +1809,26 @@ function buildBottom(item,s){
   '</div>';
 }
 
+function changeListType(newType){
+  if(!newType||newType===ctx.type)return;
+  if(!confirm('Change list type from '+ctx.type+' to '+newType+'?\nYour current progress on this list will be kept separately.'))
+    {document.getElementById('change-type').value='';return;}
+  ctx.type=newType;
+  document.getElementById('f-type').value=newType;
+  // Re-init states for new list
+  states={};
+  const items=getCL(newType);
+  items.forEach(function(item){
+    const na=isNA(item,ctx);
+    states[item.id]={status:(na||item.cond==='na_if_absent')?'na':null,resp:'',notes:'',fromXL:false,consents:[]};
+  });
+  if(xlRows.length)prefillXL(ctx.fn,items);
+  document.getElementById('sb-type').textContent=newType;
+  document.getElementById('cl-title').textContent=newType+' — '+ctx.fn;
+  renderCL(items);updateProg();
+  document.getElementById('change-type').value='';
+  toast('Changed to '+newType,'info');
+}
 function setSt(id,st){
   const prev=states[id].status;
   if(prev===st){states[id].status=null;states[id].resp='';}
@@ -1945,7 +1998,7 @@ async function saveSheets(){
   btn.disabled=true;
   btn.innerHTML=`<div class="spin"></div> Saving...`;
   try{
-    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbx48Z9XTFRyrr0HEZFt3JeTsp0TXHnUFV99Q7nw6A6TCYtSAe2zuEcYG21YNi-FMjqJ/exec';
+    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbxqF0CthrW2L4u76Nh97C7FkurIrDt0o5GsTOelZoel2Y4WWWE6zkBryAh-NXMWXKc/exec';
     const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
     const data=await res.json();
     if(data.success){
