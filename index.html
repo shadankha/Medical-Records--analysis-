@@ -1462,13 +1462,20 @@ function showXLSummary(dbg,items){
   }
 }
 function getDoctorFromExcel(fileNum){
-  // Find the user who filled Admission Assessment or Physician Care Plan
+  // Find the doctor who filled Physician Care Plan or Physician Admission Assessment
+  // Must be PHYSICIAN forms only — NOT nursing forms
   var docName='';
   xlRows.forEach(function(row){
     if(String(row.file).trim()!==String(fileNum).trim())return;
     var nm=normalizeXL(row.sheet);
-    if((nm.indexOf('physician care plan')>=0||nm.indexOf('admission')>=0||nm.indexOf('initial admission')>=0)&&row.user){
-      if(!docName)docName=row.user.trim();
+    if(!row.user)return;
+    // Exclude any nursing form
+    if(nm.indexOf('nurs')>=0)return;
+    // Physician Care Plan (exact-ish) or Physician initial admission assessment
+    var isPhysCarePlan=nm.indexOf('physician care plan')>=0;
+    var isPhysAdmission=nm.indexOf('physician initial admission')>=0||nm.indexOf('physician admission')>=0;
+    if((isPhysCarePlan||isPhysAdmission)&&!docName){
+      docName=row.user.trim();
     }
   });
   return docName;
