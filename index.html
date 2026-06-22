@@ -2005,7 +2005,7 @@ async function saveSheets(){
   btn.disabled=true;
   btn.innerHTML=`<div class="spin"></div> Saving...`;
   try{
-    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbxqF0CthrW2L4u76Nh97C7FkurIrDt0o5GsTOelZoel2Y4WWWE6zkBryAh-NXMWXKc/exec';
+    const url=localStorage.getItem('scriptUrl')||'https://script.google.com/macros/s/AKfycbysijVyCYw_FIHE-2vfNsoa_dwKwqlXu3Ce3laaGpdTI9CSJKxpapCzczWD7ZiZWcoJkw/exec';
     const res=await fetch(url,{method:'POST',body:JSON.stringify(payload)});
     const data=await res.json();
     if(data.success){
